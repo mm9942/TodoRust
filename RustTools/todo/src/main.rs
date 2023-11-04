@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 use std::error::Error;
-use chrono::{Local, NaiveDate, DateTime, TimeZone};
+use chrono::{Local, NaiveDate};
 
 #[derive(PartialEq, Debug)]
 enum TasksErr {
@@ -14,11 +14,11 @@ enum TasksErr {
 impl fmt::Display for TasksErr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TasksErr::TaskAlreadyDone => write!(f, "Task is already marked as done!"),
-            TasksErr::InvalidDateFormat => write!(f, "Provided date format is invalid!"),
-            TasksErr::FailedToAddTask => write!(f, "Failed to add task!"),
-            TasksErr::InvalidFormat => write!(f, "Provided format is invalid!"),
-            TasksErr::TaskDateNotValid => write!(f,"The task's due date has already passed!"),
+            TasksErr::TaskAlreadyDone => write!(f, "\nTask is already marked as done!\n"),
+            TasksErr::InvalidDateFormat => write!(f, "\nProvided date format is invalid!\n"),
+            TasksErr::FailedToAddTask => write!(f, "\nFailed to add task!\n"),
+            TasksErr::InvalidFormat => write!(f, "\nProvided format is invalid!\n"),
+            TasksErr::TaskDateNotValid => write!(f, "\nThe task's due date has already passed!\n"),
 
         }
     }
@@ -110,7 +110,7 @@ impl Tasks {
 
     fn check_validation(&self) -> Result<(), TasksErr> {
         match &self.due_date {
-            Some(date) if date < &Local::today().naive_local() => Err(TasksErr::TaskDateNotValid),
+            Some(date) if date < &Local::now().naive_local().date() => Err(TasksErr::TaskDateNotValid),
             _ => Ok(())
         }
     }
@@ -119,7 +119,7 @@ impl Tasks {
 impl Display for Tasks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let due_date_str = self.due_date.map(|date| date.format(&self.format).to_string()).unwrap_or("No due date".to_string());
-        write!(f, "Task: {}, Done: {}, Description: {}, Due Date: {}", self.task, self.done, self.description, due_date_str)
+        write!(f, "Task:\t\t{}\nDone:\t\t{}\nDescription:\t{}\nDue Date:\t{}\n", self.task, self.done, self.description, due_date_str)
     }
 }
 
@@ -127,7 +127,7 @@ fn main() {
     let task_result = Tasks::add("new", "test", None);
     match task_result {
         Ok(mut task) => {
-            println!("{}", task);
+            println!("\n{}", task);
             let _ = task.set_due_date("31.12.2023").unwrap();
             let _ = task.set_format("%d.%m.%Y");
             let _ = task.done();
@@ -156,6 +156,9 @@ fn main() {
                 Ok(_) => println!("Task date is valid"),
                 Err(e) => eprintln!("Task date validation failed: {}", e),
             }
+
+            let _ = new_task.rm_task();
+            println!("{}", new_task);
         }
         Err(e) => eprintln!("Failed to create task: {}", e),
     }
@@ -198,6 +201,6 @@ mod tests {
     #[test]
     fn test_task_date_validation() {
         let mut task = Tasks::add("urgent", "needs to be done", Some("2021-11-05")).unwrap();
-        assert_eq!(task.check_validation().is_err(), true);  // Assuming today's date is after 2021-11-05
+        assert_eq!(task.check_validation().is_err(), true);
     }
 }
