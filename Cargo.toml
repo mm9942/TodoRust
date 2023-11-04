@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 cargo-make = "0.37.4"
 chrono = "0.4.31"
+clap = { version = "4.4.7", features = ["debug", "env", "derive", "unicode", "string", "deprecated", "wrap_help"] }
+sqlite3 = "0.24.0"

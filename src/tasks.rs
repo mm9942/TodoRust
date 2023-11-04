@@ -39,6 +39,41 @@ pub struct Tasks {
 }
 
 impl Tasks {
+    pub fn new() -> Self {
+        let task = "".to_string(); 
+        let done = false;
+        let description = "".to_string();
+        let due_date = None;
+        let format = "%m/%d/%Y".to_string();
+        Self {
+            task,
+            done,
+            description,
+            due_date,
+            format,
+        }
+    }
+    pub fn task(&mut self, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
+        let parsed_due_date = match due_date {
+            Some(date_str) => match Self::parse_date(date_str) {
+                Ok(date) => Some(date),
+                Err(_) => return Err(TasksErr::InvalidDateFormat),
+            },
+            None => None,
+        };
+
+        if task.is_empty() || description.is_empty() {
+            return Err(TasksErr::FailedToAddTask);
+        }
+
+        Ok(Self {
+            task: task.to_string(),
+            done: false,
+            description: description.to_string(),
+            due_date: parsed_due_date,
+            format: "%m/%d/%Y".to_string(),
+        })
+    } 
     pub fn add(task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
         let parsed_due_date = match due_date {
             Some(date_str) => match Self::parse_date(date_str) {
