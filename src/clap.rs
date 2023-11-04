@@ -1,9 +1,9 @@
 pub use clap::{
-    Arg, ArgGroup, ArgMatches, 
-    Command, arg, Subcommand, Parser, Error, command , ValueEnum
+    Arg, 
+    Command, arg, Parser, command
 };
 use std::io::{stdin, stdout, Write};
-use std::result::Result;
+
 
 use crate::{tasks::Tasks, todo::Todo};
 
@@ -45,28 +45,28 @@ pub struct Args {
 pub fn args_parse() {
     let cli = cmd().get_matches();
     match cli.args_present() {
-        new => {
+        _new => {
             println!("new");
         }
-        due_date => {
+        _due_date => {
             println!("due_date");
         }
-        task => {
+        _task => {
             println!("task");
         }
-        remove => {
+        _remove => {
             println!("remove");
         }
-        list => {
+        _list => {
             println!("list");
         }
-        set_due_date => {
+        _set_due_date => {
             println!("set_due_date");
         }
-        finished => {
+        _finished => {
             println!("finished");
         }
-        check => {
+        _check => {
             println!("check");
         }
     }
@@ -75,7 +75,7 @@ pub fn args_parse() {
     let mut new_task = Tasks::new();
     let mut task_id = args.task;
     match args {
-        ref new => {
+        ref _new => {
             if args.date != None && !args.title.is_empty() && !args.description.is_empty() {
                 let date = args.date.unwrap();
                 let _ = new_task.task(&args.title, &args.description, Some(date.as_str())).unwrap();
@@ -95,11 +95,11 @@ pub fn args_parse() {
                 let _ = new_task.task(&title, &args.description, None).unwrap();
             }
         },
-        ref due_date => {
-            let mut tdv = Vec::new();
-            let mut td = Todo::new(tdv);
+        ref _due_date => {
+            let tdv = Vec::new();
+            let _td = Todo::new(tdv);
         },
-        ref task => {
+        ref _task => {
             if args.task <= 0 {
                 print!("Enter a task id: ");
                 let _ = stdout().flush();
@@ -108,11 +108,11 @@ pub fn args_parse() {
                 task_id = input.parse::<i16>().unwrap();
             }
         },
-        remove => {},
-        list => {},
-        set_due_date => {},
-        finished => {},
-        check => {},
+        _remove => {},
+        _list => {},
+        _set_due_date => {},
+        _finished => {},
+        _check => {},
     }
     // Continued program logic goes here...
 }
