@@ -35,4 +35,4 @@ command = "cargo"
 args = ["check"]
 
 [tasks.pre-push]
-dependencies = ["format", "lint", "test", "build"]
+dependencies = ["format", "lint", "test", "build", "run", "doc", "check"]

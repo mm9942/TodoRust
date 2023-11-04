@@ -11,6 +11,7 @@ pub enum TasksErr {
     FailedToAddTask,
     InvalidFormat,
     TaskDateNotValid,
+    InvalidTaskId,
 }
 
 impl fmt::Display for TasksErr {
@@ -21,13 +22,14 @@ impl fmt::Display for TasksErr {
             TasksErr::FailedToAddTask => write!(f, "\nFailed to add task!\n"),
             TasksErr::InvalidFormat => write!(f, "\nProvided format is invalid!\n"),
             TasksErr::TaskDateNotValid => write!(f, "\nThe task's due date has already passed!\n"),
+            TasksErr::InvalidTaskId => write!(f, "\nInvalid task id!\n"),
         }
     }
 }
 
 impl Error for TasksErr {}
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Tasks {
     pub task: String,
     pub done: bool,
@@ -69,11 +71,15 @@ impl Tasks {
         }
     }
 
-    pub fn rm_task(&mut self) {
-        self.task.clear();
-        self.done = false;
-        self.description.clear();
-        self.due_date = None;
+    pub fn rm_task(&mut self) -> Result<(), TasksErr> {
+        if self.done {
+            Err(TasksErr::TaskAlreadyDone)
+        } else {
+            self.task = "".to_string();
+            self.description = "".to_string();
+            self.due_date = None;
+            Ok(())
+        }
     }
 
     pub fn done(&mut self) -> Result<(), TasksErr> {
@@ -110,6 +116,9 @@ impl Tasks {
             .find_map(|&format| NaiveDate::parse_from_str(date_str, format).ok())
             .ok_or(TasksErr::InvalidDateFormat)
     }
+    pub fn is_done(&self) -> bool {
+        self.done
+    }
 }
 impl Display for Tasks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -119,7 +128,7 @@ impl Display for Tasks {
             .unwrap_or("No due date".to_string());
         write!(
             f,
-            "Task:\t\t{}\nDone:\t\t{}\nDescription:\t{}\nDue Date:\t{}\n",
+            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n",
             self.task, self.done, self.description, due_date_str
         )
     }
