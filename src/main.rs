@@ -1,7 +1,7 @@
 mod tasks;
 use crate::tasks::{Tasks, TasksErr};
-use std::fmt::Display;
-use std::io::{self, stdin, stdout, Write};
+
+use std::io::{stdin, stdout, Write};
 use std::result::Result;
 enum Command {
     new,
@@ -112,7 +112,7 @@ impl Todo {
                     }
                 }
                 "rm" => {
-                    if let len = input_vec.len() < 2 {
+                    if let _len = input_vec.len() < 2 {
                         let mut task = self.get_task().unwrap();
                         let rm_result = task.rm_task();
                         match rm_result {
@@ -153,7 +153,7 @@ impl Todo {
                     }
                 }
                 "check_validation" => {
-                    let mut task = self.get_task().unwrap();
+                    let task = self.get_task().unwrap();
                     let check_validation_result = task.check_validation();
                     match check_validation_result {
                         Ok(_) => println!("Task date is valid"),
@@ -236,7 +236,7 @@ impl Todo {
                 eprintln!("Invalid task number entered");
                 continue;
             } else {
-                let mut task = self.tasks[input_task_id - 1].clone();
+                let task = self.tasks[input_task_id - 1].clone();
                 return Ok(task);
             }
         }
@@ -246,7 +246,7 @@ impl Todo {
             eprintln!("Invalid task number entered");
             return Err(TasksErr::InvalidTaskId);
         } else {
-            let mut task = self.tasks[task_id - 1].clone();
+            let task = self.tasks[task_id - 1].clone();
             return Ok(task);
         }
     }
