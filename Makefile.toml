@@ -1,0 +1,38 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[tasks.format]
+install_crate = "chrono"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.build]
+command = "cargo"
+args = ["build"]
+
+[tasks.test]
+command = "cargo"
+args = ["test"]
+
+[tasks.run]
+command = "cargo"
+args = ["run"]
+
+[tasks.clean]
+command = "cargo"
+args = ["clean"]
+
+[tasks.doc]
+command = "cargo"
+args = ["doc"]
+
+[tasks.lint]
+command = "cargo"
+args = ["clippy"]
+
+[tasks.check]
+command = "cargo"
+args = ["check"]
+
+[tasks.pre-push]
+dependencies = ["format", "lint", "test", "build"]
