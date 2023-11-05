@@ -58,28 +58,9 @@ pub struct Args {
 }
 
 fn main() {
+    let todo = Todo::get_todo();
     let args = Args::parse();
 
-    let connection = sqlite3::open("tasks.db").unwrap();
-    let mut tasks = Vec::new();
-
-    // Query the database and fill the tasks vector
-    connection.iterate("SELECT * FROM tasks", |pairs| {
-        let mut task = Tasks::new();
-        for &(column, value) in pairs.iter() {
-            match column {
-                "task" => task.task = value.unwrap_or_default().to_string(),
-                "description" => task.description = value.unwrap_or_default().to_string(),
-                "due_date" => task.due_date = value.and_then(|date| NaiveDate::parse_from_str(date, &task.format).ok()),
-                "done" => task.done = value.unwrap_or_default().parse().unwrap_or_default(),
-                _ => (),
-            }
-        }
-        tasks.push(task);
-        true
-    }).unwrap();
-
-    let todo = Todo::new(tasks);
     let args = Args::parse();
     let mut new_task = Tasks::new();
     let mut task_id = args.task;
@@ -89,21 +70,21 @@ fn main() {
         ref new => {
             if args.date != None && args.title != None && args.description != None {
                 let date = args.date.unwrap();
-                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), Some(date.as_str())).unwrap();
+                let _ = new_task.task(1, &args.title.unwrap(), &args.description.unwrap(), Some(date.as_str())).unwrap();
             } else if args.title != None && args.description != None {
-                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), None).unwrap();
+                let _ = new_task.task(1,&args.title.unwrap(), &args.description.unwrap(), None).unwrap();
             } else if args.title != None {
                 print!("Enter a description for the task: ");
                 let _ = stdout().flush();
                 let mut description = String::new();
                 stdin().read_line(&mut description).unwrap();
-                let _ = new_task.task(&args.title.unwrap(), &description, None).unwrap();
+                let _ = new_task.task(1,&args.title.unwrap(), &description, None).unwrap();
             } else if args.description != None {
                 print!("Enter a title for the task: ");
                 let _ = stdout().flush();
                 let mut title = String::new();
                 stdin().read_line(&mut title).unwrap();
-                let _ = new_task.task(&title, &args.description.unwrap(), None).unwrap();
+                let _ = new_task.task(1,&title, &args.description.unwrap(), None).unwrap();
             }
         },
         ref due_date => {

@@ -31,6 +31,7 @@ impl Error for TasksErr {}
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Tasks {
+    pub id: i32,
     pub task: String,
     pub done: bool,
     pub description: String,
@@ -40,12 +41,14 @@ pub struct Tasks {
 
 impl Tasks {
     pub fn new() -> Self {
+        let id : i32 = 0;
         let task = "".to_string(); 
         let done = false;
         let description = "".to_string();
         let due_date = None;
         let format = "%m/%d/%Y".to_string();
         Self {
+            id,
             task,
             done,
             description,
@@ -53,7 +56,7 @@ impl Tasks {
             format,
         }
     }
-    pub fn task(&mut self, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
+    pub fn task(&mut self, id: i32, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
         let parsed_due_date = match due_date {
             Some(date_str) => match Self::parse_date(date_str) {
                 Ok(date) => Some(date),
@@ -67,6 +70,7 @@ impl Tasks {
         }
 
         Ok(Self {
+            id,
             task: task.to_string(),
             done: false,
             description: description.to_string(),
@@ -74,7 +78,7 @@ impl Tasks {
             format: "%m/%d/%Y".to_string(),
         })
     } 
-    pub fn add(task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
+    pub fn add(id: i32, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
         let parsed_due_date = match due_date {
             Some(date_str) => match Self::parse_date(date_str) {
                 Ok(date) => Some(date),
@@ -88,6 +92,7 @@ impl Tasks {
         }
 
         Ok(Self {
+            id,
             task: task.to_string(),
             done: false,
             description: description.to_string(),
@@ -153,6 +158,9 @@ impl Tasks {
     }
     pub fn is_done(&self) -> bool {
         self.done
+    }
+    pub fn get_id(&self) -> i32 {
+        self.id
     }
 }
 impl Display for Tasks {

@@ -4,6 +4,7 @@ pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
 use crate::db::DB;
 
+use chrono::NaiveDate;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Todo {
     pub tasks: Vec<Tasks>,
@@ -14,6 +15,7 @@ impl Todo {
         Todo { tasks }
     }
     pub fn interactive_mode(mut self) -> Result<(), TasksErr> {
+        let mut db = DB::new("tasks.db".to_string());
         self.clear();
         self.help();
         loop {
@@ -85,7 +87,8 @@ impl Todo {
                     }
                     let task = title.as_str();
                     let description = description.as_str();
-                    let task_result = Tasks::add(task, description, None);
+                    let task_result = Tasks::add(1,task, description, None);
+                    let _ = db.insert(task, description, false, None, "%m/%d/%Y");
                     match task_result {
                         Ok(new_task) => {
                             let task = new_task;
@@ -96,28 +99,38 @@ impl Todo {
                     }
                 }
                 "done" => {
-                    let mut task = self.get_task().unwrap();
-                    let done_result = task.done();
-                    match done_result {
-                        Ok(_) => println!("Task marked as done successfully:\n{}", task.clone()),
-                        Err(e) => eprintln!("Failed to mark task as done: {}", e),
-                    }
-                }
-                "rm" => {
-                    if let _len = input_vec.len() < 2 {
-                        let mut task = self.get_task().unwrap();
-                        let rm_result = task.rm_task();
-                        match rm_result {
-                            Ok(_) => println!("Task removed successfully"),
-                            Err(e) => eprintln!("Failed to remove task: {}", e),
+                    if let Ok(i) = input_vec[1].parse::<usize>() {
+                        if i == 0 || i > self.tasks.len() {
+                            eprintln!("Invalid task number entered");
+                            continue;
+                        }
+                        let i = i - 1;  // Adjust for 1-based indexing
+                        let _ = db.update("done", "1", i as i32);
+                        let done_result = self.tasks[i].done();
+                        match done_result {
+                            Ok(_) => println!("Task marked as done successfully:\n{}", self.tasks[i].clone()),
+                            Err(e) => eprintln!("Failed to mark task as done: {}", e),
                         }
                     } else {
-                        let mut task = self.get_task().unwrap();
-                        let rm_result = task.rm_task();
-                        match rm_result {
-                            Ok(_) => println!("Task removed successfully"),
-                            Err(e) => eprintln!("Failed to remove task: {}", e),
+                        eprintln!("Invalid task number entered");
+                    }
+                    
+                }
+                "rm" => {
+                    if input_vec.len() < 2 {
+                        eprintln!("Usage: rm <task_number>");
+                        continue;
+                    }
+                    if let Ok(i) = input_vec[1].parse::<usize>() {
+                        if i == 0 || i > self.tasks.len() {
+                            eprintln!("Invalid task number entered");
+                            continue;
                         }
+                        let i = i - 1;  // Adjust for 1-based indexing
+                        db.remove(i as i32);
+                        self.tasks.remove(i);
+                    } else {
+                        eprintln!("Invalid task number entered");
                     }
                 }
                 "set_due_date" => {
@@ -246,5 +259,29 @@ impl Todo {
     }
     pub fn clear(&self) {
         print!("{}[2J", 27 as char);
+    }
+    pub fn get_todo() -> Todo {
+        let connection = sqlite3::open("tasks.db").unwrap();
+        let mut tasks = Vec::new();
+
+        // Query the database and fill the tasks vector
+        connection.iterate("SELECT * FROM tasks", |pairs| {
+            let mut task = Tasks::new();
+            for &(column, value) in pairs.iter() {
+                match column {
+                    "id" => task.id = value.unwrap_or_default().parse().unwrap_or_default(),
+                    "task" => task.task = value.unwrap_or_default().to_string(),
+                    "description" => task.description = value.unwrap_or_default().to_string(),
+                    "due_date" => task.due_date = value.and_then(|date| NaiveDate::parse_from_str(date, &task.format).ok()),
+                    "done" => task.done = value.unwrap_or_default().parse().unwrap_or_default(),
+                    _ => (),
+                }
+            }
+            tasks.push(task);
+            true
+        }).unwrap();
+
+        let todo = Todo::new(tasks);
+        todo
     }
 }
