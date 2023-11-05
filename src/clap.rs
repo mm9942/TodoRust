@@ -3,43 +3,17 @@ pub use clap::{
     Command, arg, Parser, command
 };
 use std::io::{stdin, stdout, Write};
+use std::vec;
 use crate::db::DB;
 use crate::{tasks::Tasks, todo::Todo};
 
+use std::collections::HashMap;
 
-#[derive(Parser, Debug)]
-#[command(name = "tasks", version = "0.1.0", long_about = "A task manager for better management of a time")]
-pub struct Args {
-    #[arg(short='n', long="new", help="Create a new task")]
-    new: bool,
+use chrono::NaiveDate;
+use sqlite3::{State, *};
+use sqlite3;
+std::result::Result;
 
-    #[arg(short='d', long="date", help="Define a date for the new task or to set due date")]
-    date: Option<String>,
-
-    #[arg(short='t', long="task", help="Define wich task to address")]
-    task: Option<i16>,
-    
-    #[arg(long="title", help="Define a title for the new task")]
-    title: Option<String>,
-
-    #[arg(long="description", help="Define a description for the new task")]
-    description: Option<String>,
-
-    #[arg(short = 'r', long="rm", help="Remove a task")]
-    remove: bool,
-
-    #[arg(short = 'l', long="list", help="List all tasks")]
-    list: bool,
-
-    #[arg(long="set_due_date", help="Set due date")]
-    set_due_date: bool,
-
-    #[arg(short = 'f', long="finished", help="Set task as finished")]
-    finished: bool,
-
-    #[arg(short = 'c', long="check", help="Check if date already has passed")]
-    check: bool,
-}
 
 pub fn args_parse() {
     let mut db = DB::new("tasks.db".to_string());
@@ -83,20 +57,48 @@ pub fn args_parse() {
             }
         },
         ref remove => {},
-        ref _list => {
-            let connection = sqlite3::open(":tasks:").unwrap();
-            connection.iterate("SELECT * FROM users WHERE age > 50", |pairs| {
-                for &(column, value) in pairs.iter() {
-                    println!("{} = {}", column, value.unwrap());
-                }
-                true
-            })
-            .unwrap();
+        ref list => {
+            fn get_list();
         },
         ref set_due_date => {},
         ref finished => {},
         ref check => {},
     }
+}
+pub fn get_list() -> Result<Vec<Tasks>, Error> {
+    let mut pairs: HashMap<String, String> = HashMap::new();
+            let connection = sqlite3::open("tasks.db").unwrap();
+            connection.iterate("SELECT * FROM tasks", |rows| {
+                for &(column, value) in rows.iter() {
+                    if let Some(val) = value {
+                        pairs.insert(column.to_string(), val.to_string());
+
+                    }
+                }
+                true
+            })
+            .unwrap();
+            
+            let mut task = Tasks::new();
+            let mut Taskss = Vec::new();
+            let no_description = "No description found".to_string();
+            let default_format = "%d.%m.%Y".to_string();
+            for (column, value) in &pairs {
+                let description = pairs.get("description").unwrap_or(&no_description);
+                let format = pairs.get("format").unwrap_or(&default_format);  
+                let due_date = match pairs.get("due_date") {
+                    Some(date_str) => {
+                        // If you have a due_date key, you can convert the date string to the desired format here
+                        // assuming the date string is in the format specified by the 'format' value
+                        let formatted_date = date_str;  // replace this with actual formatting code
+                        Some(formatted_date)
+                    },
+                    None => None,
+                };
+                let _ = task.task(column, description, None);
+                vec![Taskss.push(task)];
+            }
+            Ok(Taskss);
 }
 /*
 pub fn cmd() -> Command {
