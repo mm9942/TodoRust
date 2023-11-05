@@ -196,18 +196,29 @@ impl Todo {
     }
     pub fn list(&self) -> Result<String, TasksErr> {
         let mut result_finished = String::new();
-        let mut resuresult_unfinished = String::new();
+        let mut result_unfinished = String::new();
+
+        // Iterate over tasks and categorize them as finished or unfinished.
         for (index, task) in self.tasks.iter().enumerate() {
             if task.done {
                 result_finished.push_str(&format!("\nTask {}:\n{}\n", index + 1, task));
             } else {
-                resuresult_unfinished.push_str(&format!("\nTask {}:\n\n{}\n", index + 1, task));
+                result_unfinished.push_str(&format!("\nTask {}:\n{}\n", index + 1, task));
             }
         }
-        let result = format!(
-            "Finished tasks:\n{}\nUnfinished tasks:\n{}",
-            result_finished, resuresult_unfinished
-        );
+
+        let mut result = String::new(); // Initialize the result string.
+
+        // Conditionally concatenate the finished and unfinished tasks to the result.
+        if !result_finished.is_empty() {
+            result.push_str(&format!("\nFinished tasks:\n{}", result_finished));
+        }
+        if !result_unfinished.is_empty() {
+            if !result.is_empty() {
+                result.push_str("\n"); // Add a newline to separate the finished and unfinished tasks if both are present.
+            }
+            result.push_str(&format!("\nUnfinished tasks:\n{}", result_unfinished));
+        }
         Ok(result)
     }
     pub fn get_task(&self) -> Result<Tasks, TasksErr> {

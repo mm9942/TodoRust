@@ -58,40 +58,28 @@ pub struct Args {
 }
 
 fn main() {
+    let args = Args::parse();
 
-    let mut pairs: HashMap<String, String> = HashMap::new();
     let connection = sqlite3::open("tasks.db").unwrap();
-    connection.iterate("SELECT * FROM tasks", |rows| {
-        for &(column, value) in rows.iter() {
-            if let Some(val) = value {
-                pairs.insert(column.to_string(), val.to_string());
+    let mut tasks = Vec::new();
+
+    // Query the database and fill the tasks vector
+    connection.iterate("SELECT * FROM tasks", |pairs| {
+        let mut task = Tasks::new();
+        for &(column, value) in pairs.iter() {
+            match column {
+                "task" => task.task = value.unwrap_or_default().to_string(),
+                "description" => task.description = value.unwrap_or_default().to_string(),
+                "due_date" => task.due_date = value.and_then(|date| NaiveDate::parse_from_str(date, &task.format).ok()),
+                "done" => task.done = value.unwrap_or_default().parse().unwrap_or_default(),
+                _ => (),
             }
         }
+        tasks.push(task);
         true
-    })
-    .unwrap();
-    
-    let mut task = Tasks::new();
-    let mut Taskss = Vec::new();
-    let no_description = "No description found".to_string();
-    let default_format = "%d.%m.%Y".to_string();
-    for (column, value) in &pairs {
-        println!("{}-{}", column, value);
-        let description = pairs.get("description").unwrap_or(&no_description);
-        let format = pairs.get("format").unwrap_or(&default_format);  
-        let due_date = match pairs.get("due_date") {
-            Some(date_str) => {
-                // If you have a due_date key, you can convert the date string to the desired format here
-                // assuming the date string is in the format specified by the 'format' value
-                let formatted_date = date_str;  // replace this with actual formatting code
-                Some(formatted_date)
-            },
-            None => None,
-        };
-        let _ = task.task(column, description, None);
-        let _ = Taskss.push(task.to_owned());
-    }
-    let todo = Todo::new(Taskss);
+    }).unwrap();
+
+    let todo = Todo::new(tasks);
     let args = Args::parse();
     let mut new_task = Tasks::new();
     let mut task_id = args.task;
@@ -138,37 +126,3 @@ fn main() {
     }
     let _ = todo.clone().interactive_mode().unwrap();
 }
-
-/*
-fn main() {
-    let mut tasks_vec = Vec::new();
-    let task_result = Tasks::add("new", "test", None);
-    match task_result {
-        Ok(mut task) => {
-            let _ = task.set_due_date("31.12.2023").unwrap();
-            let _ = task.set_format("%d.%m.%Y");
-            let _ = task.done();
-            tasks_vec.push(task);
-        }
-        Err(e) => eprintln!("Failed to create task: {}", e),
-    }
-    let task_with_due_date_result = Tasks::add("new", "test", Some("24.12.2023"));
-    match task_with_due_date_result {
-        Ok(mut task_with_due_date) => {    
-            let _ = task_with_due_date.set_format("%d.%m.%Y").unwrap();
-            tasks_vec.push(task_with_due_date);
-        },
-        Err(e) => eprintln!("Failed to create task: {}", e),
-    }
-
-    let new_task_result = Tasks::add("urgent", "needs to be done", Some("2021-11-05"));
-    match new_task_result {
-        Ok(mut new_task) => {
-            let _ = new_task.set_format("%d.%m.%Y").unwrap();
-            tasks_vec.push(new_task);
-        },
-        Err(e) => eprintln!("Failed to create task: {}", e),
-    }
-
-    let todo = Todo::new(tasks_vec);  // Just pass tasks_vec directly
-}*/
