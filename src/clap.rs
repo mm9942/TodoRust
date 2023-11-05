@@ -3,8 +3,6 @@ pub use clap::{
     Command, arg, Parser, command
 };
 use std::io::{stdin, stdout, Write};
-
-
 use crate::db::DB;
 use crate::{tasks::Tasks, todo::Todo};
 
@@ -45,7 +43,7 @@ pub struct Args {
 
 pub fn args_parse() {
     let mut db = DB::new("tasks.db".to_string());
-    let _ = db.connect();
+    let _ = db.select_all();
 
     let args = Args::parse();
     let mut new_task = Tasks::new();
@@ -85,28 +83,15 @@ pub fn args_parse() {
             }
         },
         ref remove => {},
-        list => {
-            match db.select_all() {
-                Ok(mut stmt) => {
-                    loop {
-                        match stmt.next() {
-                            Ok(sqlite3::State::Row) => {
-                                // Assume the task title is in the first column, and description is in the second column.
-                                // Adjust column indices as necessary based on your database schema.
-                                let title: String = stmt.read::<String>(0).unwrap();
-                                let description: String = stmt.read::<String>(1).unwrap();
-                                println!("Title: {}, Description: {}", title, description);
-                            }
-                            Ok(sqlite3::State::Done) => break,
-                            Err(e) => {
-                                println!("Failed to read row: {}", e);
-                                break;
-                            }
-                        }
-                    }
+        ref _list => {
+            let connection = sqlite3::open(":tasks:").unwrap();
+            connection.iterate("SELECT * FROM users WHERE age > 50", |pairs| {
+                for &(column, value) in pairs.iter() {
+                    println!("{} = {}", column, value.unwrap());
                 }
-                Err(e) => println!("Failed to execute statement: {}", e),
-            }
+                true
+            })
+            .unwrap();
         },
         ref set_due_date => {},
         ref finished => {},
