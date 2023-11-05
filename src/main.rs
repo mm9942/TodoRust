@@ -3,6 +3,7 @@ mod todo;
 mod db;
 //mod clap;
 mod command;
+use std::env::args;
 use crate::{
     tasks::{Tasks, TasksErr},
     todo::Todo,
@@ -64,7 +65,6 @@ fn main() {
         for &(column, value) in rows.iter() {
             if let Some(val) = value {
                 pairs.insert(column.to_string(), val.to_string());
-
             }
         }
         true
@@ -76,6 +76,7 @@ fn main() {
     let no_description = "No description found".to_string();
     let default_format = "%d.%m.%Y".to_string();
     for (column, value) in &pairs {
+        println!("{}-{}", column, value);
         let description = pairs.get("description").unwrap_or(&no_description);
         let format = pairs.get("format").unwrap_or(&default_format);  
         let due_date = match pairs.get("due_date") {
@@ -88,17 +89,54 @@ fn main() {
             None => None,
         };
         let _ = task.task(column, description, None);
-        vec![Taskss.push(task)];
+        let _ = Taskss.push(task.to_owned());
     }
     let todo = Todo::new(Taskss);
-
-    match Args::parse() {
+    let args = Args::parse();
+    let mut new_task = Tasks::new();
+    let mut task_id = args.task;
+    match args {
         list => {
-        }
-        _ => {
-            todo.interactive_mode();
-        }
+        },
+        ref new => {
+            if args.date != None && args.title != None && args.description != None {
+                let date = args.date.unwrap();
+                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), Some(date.as_str())).unwrap();
+            } else if args.title != None && args.description != None {
+                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), None).unwrap();
+            } else if args.title != None {
+                print!("Enter a description for the task: ");
+                let _ = stdout().flush();
+                let mut description = String::new();
+                stdin().read_line(&mut description).unwrap();
+                let _ = new_task.task(&args.title.unwrap(), &description, None).unwrap();
+            } else if args.description != None {
+                print!("Enter a title for the task: ");
+                let _ = stdout().flush();
+                let mut title = String::new();
+                stdin().read_line(&mut title).unwrap();
+                let _ = new_task.task(&title, &args.description.unwrap(), None).unwrap();
+            }
+        },
+        ref due_date => {
+            let tdv = Vec::new();
+            let _td = Todo::new(tdv);
+        },
+        ref task => {
+            if args.task <= Some(0)  {
+                print!("Enter a task id: ");
+                let _ = stdout().flush();
+                let mut input = String::new();
+                stdin().read_line(&mut input).unwrap();
+                task_id = Some(input.parse::<i16>().unwrap());
+            }
+        },
+        ref remove => {},
+        ref set_due_date => {},
+        ref finished => {},
+        ref check => {},
     }
+    let _ = todo.clone().interactive_mode().unwrap();
 }
 
 /*
