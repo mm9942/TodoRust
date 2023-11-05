@@ -28,7 +28,7 @@ c.execute('''
           (task, done, description, format)
           VALUES ('Check my mails', 0, 'Relogin into Outlook with personal domain''s mail', '%d.%m.%Y')
           ''')
-
+format 3 %d.%m.%Y
 # Insert record
 c.execute('''
           INSERT INTO tasks

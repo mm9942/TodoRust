@@ -162,6 +162,18 @@ impl Tasks {
     pub fn get_id(&self) -> i32 {
         self.id
     }
+    pub fn get_task(&self) -> &str {
+        &self.task
+    }
+    pub fn get_description(&self) -> &str {
+        &self.description
+    }
+    pub fn get_due_date(&self) -> Option<NaiveDate> {
+        self.due_date
+    }
+    pub fn get_format(&self) -> &str {
+        &self.format
+    }
 }
 impl Display for Tasks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -171,8 +183,8 @@ impl Display for Tasks {
             .unwrap_or("No due date".to_string());
         write!(
             f,
-            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n",
-            self.task, self.done, self.description, due_date_str
+            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n",
+            self.task, self.done, self.description, due_date_str, self.format
         )
     }
 }

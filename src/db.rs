@@ -1,23 +1,22 @@
-use sqlite3::{Connection, Statement, Bindable};
+use sqlite3::{Connection, Statement, Bindable, State};
 use std::result::Result;
 use std::error::Error;
 pub use chrono::{NaiveDate};
 
 pub struct DB {
     path: String,
-    conn: Connection,
 }
 
 impl DB {
     pub fn new(path: String) -> Self {
         Self {
-            path: path.clone(),
-            conn: sqlite3::open(&path).expect("Failed to open the database"),
+            path: path.clone()
         }
     }
 
     pub fn select_all(&mut self) -> Result<(), Box<dyn Error>> {
-        self.conn.iterate("SELECT * FROM users WHERE age > 50", |pairs| {
+        let mut conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
+        conn.iterate("SELECT * FROM users WHERE age > 50", |pairs| {
             for &(column, value) in pairs.iter() {
                 println!("{} = {}", column, value.unwrap());
             }
@@ -25,7 +24,8 @@ impl DB {
         }).map_err(|e| Box::new(e) as Box<dyn Error>)
     }
     pub fn insert(&mut self, task: &str, description: &str, done: bool, due_date: Option<NaiveDate>, format: &str) -> Result<(), Box<dyn Error>> {
-        let mut stmt = self.conn.prepare("INSERT INTO tasks (task, description, done, due_date, format) VALUES (?, ?, ?, ?, ?)")?;
+        let mut conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
+        let mut stmt = conn.prepare("INSERT INTO tasks (task, description, done, due_date, format) VALUES (?, ?, ?, ?, ?)")?;
         
         let mut due_date_str = String::new();
         match due_date {
@@ -46,22 +46,31 @@ impl DB {
     
         let mut cursor = stmt.cursor();
         cursor.next()?;
+        conn.execute("COMMIT;")?;
         Ok(())
     }
+    
+
     pub fn remove(&mut self, id: i32) -> Result<(), Box<dyn Error>> {
+        let conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
         let id = id as i64;
         let stmt: String = format!("DELETE FROM tasks WHERE id = {}", id);
-        self.conn.execute(stmt)
+        conn.execute(stmt)
             .unwrap();
+        conn.execute("COMMIT;")?;
         Ok(())
     }
-    pub fn update(&mut self, column:&str, value:&str, id: i32) -> Result<(), Box<dyn Error>> {
+
+    pub fn update(&mut self, column: &str, value: &str, id: i32) -> Result<(), Box<dyn Error>> {
+        let conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
         let id = id as i64;
-        let mut stmt = self.conn.prepare(&format!("UPDATE tasks SET {} = ? WHERE id = ?", column))?;
+        let mut stmt = conn.prepare(&format!("UPDATE tasks SET {} = ? WHERE id = ?", column))?;
         stmt.bind(1, value)?;
         stmt.bind(2, id)?;
-        let mut cursor = stmt.cursor();
-        cursor.next()?;
+        let mut cursor = stmt.cursor()
+            .next()
+            .unwrap();
+        conn.execute("COMMIT;")?;
         Ok(())
     }
     
@@ -75,22 +84,52 @@ impl DB {
         }
         Ok(rows)
     }*/
+}
+pub fn remove(title: &str) -> Result<(), Box<dyn Error>> {
+    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
+    let stmt: String = format!("DELETE FROM tasks WHERE task = '{}'", title);
+    conn.execute(stmt)
+        .unwrap();
+    conn.execute("COMMIT;")?;
+    Ok(())
+}
 
-    pub fn select_by_id(&mut self, id: i32) -> Result<Statement,Box<dyn Error>> {
-        let mut stmt = self.conn.prepare("SELECT * FROM tasks WHERE id = ?")?;
-        stmt.bind(1, id as i64)?;  // Convert id to i64
-        Ok(stmt)
-    }
-
-    pub fn select_by_task(&mut self, task: &str) -> Result<Statement,Box<dyn Error>> {
-        let mut stmt = self.conn.prepare("SELECT * FROM tasks WHERE task = ?")?;
-        stmt.bind(1, task)?;
-        Ok(stmt)
-    }
-
-    pub fn mark_done(&mut self, id: i32) -> Result<Statement, Box<dyn Error>> {
-        let mut stmt = self.conn.prepare("UPDATE tasks SET done = 1 WHERE id = ?")?;
-        stmt.bind(1, id as i64)?;  // Convert id to i64
-        Ok(stmt)
-    }
+pub fn done(title: &str) -> Result<(), Box<dyn Error>> {
+    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
+    let mut stmt = format!("UPDATE tasks SET Done = true WHERE task = '{}';", title);
+    conn.execute(
+        stmt
+    )
+    .unwrap();
+    conn.execute("COMMIT;")?;
+    Ok(())
+}
+pub fn update(column: &str, value: &str, title: &str) -> Result<(), Box<dyn Error>> {
+    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
+    let mut stmt = format!("UPDATE tasks SET {} = '{}' where task = '{}';", column , value, title);
+    conn.execute(
+        stmt
+    )
+    .unwrap();
+    conn.execute("COMMIT;")?;
+    Ok(())
+}
+pub fn due_date(value: &str, title: &str) -> Result<(), Box<dyn Error>> {
+    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
+    let mut stmt = format!("UPDATE tasks SET due_date = '{}' where task = '{}';", value , title);
+    conn.execute(
+        stmt
+    )
+    .unwrap();
+    conn.execute("COMMIT;")?;
+    Ok(())
+}
+pub fn set_format(value: &str, title: &str) -> Result<(), Box<dyn Error>> {
+    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
+    let mut stmt = conn.prepare("UPDATE tasks SET format = ? WHERE task = ?")?;
+    stmt.bind(1, value)?;
+    stmt.bind(2, title)?;
+    stmt.next().unwrap();
+    conn.execute("COMMIT;")?;
+    Ok(())
 }

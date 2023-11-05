@@ -17,11 +17,6 @@ use std::io::{Write, stdout, stdin};
 //use std::result::Result;
 
 
-
-
-
-use sqlite3;
-
 #[derive(Parser, Debug)]
 #[command(name = "tasks", version = "0.1.0", long_about = "A task manager for better management of a time")]
 pub struct Args {

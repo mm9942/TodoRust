@@ -1,8 +1,7 @@
 pub use crate::tasks::{Tasks, TasksErr};
-
 pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
-use crate::db::DB;
+use crate::db::{remove, done, update, due_date, set_format, DB};
 
 use chrono::NaiveDate;
 #[derive(Debug, Clone, PartialEq)]
@@ -37,7 +36,7 @@ impl Todo {
             let input_vec: Vec<&str> = input.split_whitespace().collect();
 
             match input_vec[0].to_lowercase().as_str() {
-                "new" => {
+                "new" | "add" | "create" => {
                     if input_vec.len() < 3 {
                         eprintln!(
                             "Invalid command entered. Usage: new <task> <description> [due_date]"
@@ -105,7 +104,7 @@ impl Todo {
                             continue;
                         }
                         let i = i - 1;  // Adjust for 1-based indexing
-                        let _ = db.update("done", "1", i as i32);
+                        let _ = done(self.tasks[i].get_task());
                         let done_result = self.tasks[i].done();
                         match done_result {
                             Ok(_) => println!("Task marked as done successfully:\n{}", self.tasks[i].clone()),
@@ -116,7 +115,7 @@ impl Todo {
                     }
                     
                 }
-                "rm" => {
+                "rm" | "remove" | "purge" | "delete" => {
                     if input_vec.len() < 2 {
                         eprintln!("Usage: rm <task_number>");
                         continue;
@@ -127,37 +126,71 @@ impl Todo {
                             continue;
                         }
                         let i = i - 1;  // Adjust for 1-based indexing
-                        db.remove(i as i32);
+                        let _ = remove(self.tasks[i].get_task());
                         self.tasks.remove(i);
                     } else {
                         eprintln!("Invalid task number entered");
                     }
                 }
-                "set_due_date" => {
-                    let mut task = self.get_task().unwrap();
-                    if input_vec.len() < 2 {
-                        eprintln!("Invalid command entered. Usage: set_due_date <due_date>");
+                "set_due_date" | "date" => {
+                    if input_vec.len() < 3 {
+                        eprintln!("Usage: set_due_date <task_number> <due_date>");
                         continue;
                     }
-                    let set_due_date_result = task.set_due_date(input_vec[1]);
-                    match set_due_date_result {
-                        Ok(_) => println!("Due date set successfully:\n{}", task),
-                        Err(e) => eprintln!("Failed to set due date for task: {}", e),
+                    if let Ok(i) = input_vec[1].parse::<usize>() {
+                        if i == 0 || i > self.tasks.len() {
+                            eprintln!("Invalid task number entered. Usage: set_due_date <task_number> <due_date>");
+                            continue;
+                        }
+                        let i = i - 1;  // Adjust for 1-based indexing
+                        let mut t = self.tasks[i].clone();
+                        let _ = self.tasks[i].set_due_date(input_vec[2]);
+                        let _ = t.set_due_date(input_vec[2]);
+                        let date_str = format!("{}", t.get_due_date().unwrap());
+                        let _ = update("due_date", &date_str, self.tasks[i].get_task());
+                        match self.tasks[i].set_due_date(input_vec[2]) {
+                            Ok(_) => {
+                                match due_date(input_vec[2], self.tasks[i].get_task()) {
+                                    Ok(_) => (),
+                                    Err(e) => eprintln!("Failed to update due_date: {}", e),
+                                }
+                            },
+                            Err(e) => eprintln!("Failed to set due_date: {}", e),
+                        }
+                    } else {
+                        eprintln!("Invalid task number entered. Usage: set_due_date <task_number> <due_date>");
                     }
                 }
-                "set_format" => {
-                    let mut task = self.get_task().unwrap();
-                    if input_vec.len() < 2 {
-                        eprintln!("Invalid command entered. Usage: set_format <format>");
+                
+                //format 4 %Y-%m-%d
+                "set_format" | "format"=> {
+                    if input_vec.len() < 3 {
+                        eprintln!("Usage: set_format <task_number> <format>");
                         continue;
                     }
-                    let set_format_result = task.set_format(input_vec[1]);
-                    match set_format_result {
-                        Ok(_) => println!("Date format set successfully:\n{}", task),
-                        Err(e) => eprintln!("Failed to set date format for task: {}", e),
+                    if let Ok(i) = input_vec[1].parse::<usize>() {
+                        if i == 0 || i > self.tasks.len() {
+                            eprintln!("Invalid command entered. Usage: set_format <task_number> <format>");
+                            continue;
+                        }
+                        let i = i - 1;  // Adjust for 1-based indexing
+                        let format = input_vec[2];
+                        let _ = self.tasks[i].set_format(format);
+                        let _ = update("format", format, self.tasks[i].get_task());
+                        match self.tasks[i].set_format(format) {
+                            Ok(_) => {
+                                match set_format(format, self.tasks[i].get_task()) {
+                                    Ok(_) => (),
+                                    Err(e) => eprintln!("Failed to update format: {}", e),
+                                }
+                            },
+                            Err(e) => eprintln!("Failed to set format: {}", e),
+                        }
+                    } else {
+                        eprintln!("Invalid task number entered");
                     }
                 }
-                "check_validation" => {
+                "check_validation" | "validate" => {
                     let task = self.get_task().unwrap();
                     let check_validation_result = task.check_validation();
                     match check_validation_result {
@@ -273,7 +306,13 @@ impl Todo {
                     "task" => task.task = value.unwrap_or_default().to_string(),
                     "description" => task.description = value.unwrap_or_default().to_string(),
                     "due_date" => task.due_date = value.and_then(|date| NaiveDate::parse_from_str(date, &task.format).ok()),
-                    "done" => task.done = value.unwrap_or_default().parse().unwrap_or_default(),
+                    "done" => task.done = {
+                        match value.unwrap_or_default().parse().unwrap_or_default() {
+                            0 => false,
+                            1 => true,
+                            _ => false,
+                        }
+                    },
                     _ => (),
                 }
             }
