@@ -1,7 +1,7 @@
-use sqlite3::{Connection, State, Statement, Bindable};
+use sqlite3::{Connection, Statement, Bindable};
 use std::result::Result;
 use std::error::Error;
-pub use chrono::{Local, NaiveDate};
+pub use chrono::{NaiveDate};
 
 pub struct DB {
     path: String,

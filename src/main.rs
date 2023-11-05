@@ -3,24 +3,23 @@ mod todo;
 mod db;
 //mod clap;
 mod command;
-use std::env::args;
+
 use crate::{
-    tasks::{Tasks, TasksErr},
+    tasks::{Tasks},
     todo::Todo,
-    db::DB,
 };
 pub use clap::{
     Arg, 
     Command, arg, Parser, command
 };
-use std::io::{self, Write, stdout, stdin};
-use std::fmt::Display;
+use std::io::{Write, stdout, stdin};
+
 //use std::result::Result;
 
-use std::collections::HashMap;
 
-use chrono::NaiveDate;
-use sqlite3::{Result, State, *};
+
+
+
 use sqlite3;
 
 #[derive(Parser, Debug)]
@@ -59,15 +58,15 @@ pub struct Args {
 
 fn main() {
     let todo = Todo::get_todo();
-    let args = Args::parse();
+    let _args = Args::parse();
 
     let args = Args::parse();
     let mut new_task = Tasks::new();
     let mut task_id = args.task;
     match args {
-        list => {
+        _list => {
         },
-        ref new => {
+        ref _new => {
             if args.date != None && args.title != None && args.description != None {
                 let date = args.date.unwrap();
                 let _ = new_task.task(1, &args.title.unwrap(), &args.description.unwrap(), Some(date.as_str())).unwrap();
@@ -87,11 +86,11 @@ fn main() {
                 let _ = new_task.task(1,&title, &args.description.unwrap(), None).unwrap();
             }
         },
-        ref due_date => {
+        ref _due_date => {
             let tdv = Vec::new();
             let _td = Todo::new(tdv);
         },
-        ref task => {
+        ref _task => {
             if args.task <= Some(0)  {
                 print!("Enter a task id: ");
                 let _ = stdout().flush();
@@ -100,10 +99,10 @@ fn main() {
                 task_id = Some(input.parse::<i16>().unwrap());
             }
         },
-        ref remove => {},
-        ref set_due_date => {},
-        ref finished => {},
-        ref check => {},
+        ref _remove => {},
+        ref _set_due_date => {},
+        ref _finished => {},
+        ref _check => {},
     }
     let _ = todo.clone().interactive_mode().unwrap();
 }
