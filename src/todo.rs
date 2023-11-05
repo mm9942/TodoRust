@@ -2,6 +2,7 @@ pub use crate::tasks::{Tasks, TasksErr};
 
 pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
+use crate::db::DB;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Todo {

@@ -5,6 +5,7 @@ pub use clap::{
 use std::io::{stdin, stdout, Write};
 
 
+use crate::db::DB;
 use crate::{tasks::Tasks, todo::Todo};
 
 
@@ -18,13 +19,13 @@ pub struct Args {
     date: Option<String>,
 
     #[arg(short='t', long="task", help="Define wich task to address")]
-    task: i16,
+    task: Option<i16>,
     
     #[arg(long="title", help="Define a title for the new task")]
-    title: String,
+    title: Option<String>,
 
     #[arg(long="description", help="Define a description for the new task")]
-    description: String,
+    description: Option<String>,
 
     #[arg(short = 'r', long="rm", help="Remove a task")]
     remove: bool,
@@ -43,79 +44,76 @@ pub struct Args {
 }
 
 pub fn args_parse() {
-    let cli = cmd().get_matches();
-    match cli.args_present() {
-        _new => {
-            println!("new");
-        }
-        _due_date => {
-            println!("due_date");
-        }
-        _task => {
-            println!("task");
-        }
-        _remove => {
-            println!("remove");
-        }
-        _list => {
-            println!("list");
-        }
-        _set_due_date => {
-            println!("set_due_date");
-        }
-        _finished => {
-            println!("finished");
-        }
-        _check => {
-            println!("check");
-        }
-    }
+    let mut db = DB::new("tasks.db".to_string());
+    let _ = db.connect();
 
     let args = Args::parse();
     let mut new_task = Tasks::new();
     let mut task_id = args.task;
     match args {
-        ref _new => {
-            if args.date != None && !args.title.is_empty() && !args.description.is_empty() {
+        ref new => {
+            if args.date != None && args.title != None && args.description != None {
                 let date = args.date.unwrap();
-                let _ = new_task.task(&args.title, &args.description, Some(date.as_str())).unwrap();
-            } else if !args.title.is_empty() && !args.description.is_empty() {
-                let _ = new_task.task(&args.title, &args.description, None).unwrap();
-            } else if !args.title.is_empty() {
+                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), Some(date.as_str())).unwrap();
+            } else if args.title != None && args.description != None {
+                let _ = new_task.task(&args.title.unwrap(), &args.description.unwrap(), None).unwrap();
+            } else if args.title != None {
                 print!("Enter a description for the task: ");
                 let _ = stdout().flush();
                 let mut description = String::new();
                 stdin().read_line(&mut description).unwrap();
-                let _ = new_task.task(&args.title, &description, None).unwrap();
-            } else if !args.description.is_empty() {
+                let _ = new_task.task(&args.title.unwrap(), &description, None).unwrap();
+            } else if args.description != None {
                 print!("Enter a title for the task: ");
                 let _ = stdout().flush();
                 let mut title = String::new();
                 stdin().read_line(&mut title).unwrap();
-                let _ = new_task.task(&title, &args.description, None).unwrap();
+                let _ = new_task.task(&title, &args.description.unwrap(), None).unwrap();
             }
         },
-        ref _due_date => {
+        ref due_date => {
             let tdv = Vec::new();
             let _td = Todo::new(tdv);
         },
-        ref _task => {
-            if args.task <= 0 {
+        ref task => {
+            if args.task <= Some(0)  {
                 print!("Enter a task id: ");
                 let _ = stdout().flush();
                 let mut input = String::new();
                 stdin().read_line(&mut input).unwrap();
-                task_id = input.parse::<i16>().unwrap();
+                task_id = Some(input.parse::<i16>().unwrap());
             }
         },
-        _remove => {},
-        _list => {},
-        _set_due_date => {},
-        _finished => {},
-        _check => {},
+        ref remove => {},
+        list => {
+            match db.select_all() {
+                Ok(mut stmt) => {
+                    loop {
+                        match stmt.next() {
+                            Ok(sqlite3::State::Row) => {
+                                // Assume the task title is in the first column, and description is in the second column.
+                                // Adjust column indices as necessary based on your database schema.
+                                let title: String = stmt.read::<String>(0).unwrap();
+                                let description: String = stmt.read::<String>(1).unwrap();
+                                println!("Title: {}, Description: {}", title, description);
+                            }
+                            Ok(sqlite3::State::Done) => break,
+                            Err(e) => {
+                                println!("Failed to read row: {}", e);
+                                break;
+                            }
+                        }
+                    }
+                }
+                Err(e) => println!("Failed to execute statement: {}", e),
+            }
+        },
+        ref set_due_date => {},
+        ref finished => {},
+        ref check => {},
     }
-    // Continued program logic goes here...
 }
+/*
 pub fn cmd() -> Command {
 
     Command::new("TaskManager")
@@ -160,3 +158,4 @@ pub fn cmd() -> Command {
     )
 
 }
+*/

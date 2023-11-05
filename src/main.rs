@@ -2,8 +2,10 @@ mod tasks;
 mod clap;
 mod command;
 mod todo;
+mod db;
+use crate::db::DB;
 use crate::todo::Todo;
-use crate::clap::{cmd, args_parse};
+use crate::clap::{args_parse};
 pub use crate::command::Command;
 
 pub use crate::tasks::{Tasks, TasksErr};
@@ -11,7 +13,7 @@ pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
 
 fn main() {
-    let _command = cmd();
+    //let _command = cmd();
     let _arg = args_parse();
     let mut tasks_vec = Vec::new();
     let task_result = Tasks::add("new", "test", None);
