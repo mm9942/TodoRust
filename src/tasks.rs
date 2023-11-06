@@ -139,6 +139,18 @@ impl Tasks {
         Ok(())
     }
 
+    pub fn set_title(&mut self, title: &str) {
+        self.task = title.to_string();
+    }
+
+    pub fn set_description(&mut self, description: &str) {
+        self.description = description.to_string();
+    }
+
+    pub fn set_id(&mut self, id: i32) {
+        self.id = id;
+    }
+
     pub fn is_valid_format(format: &str) -> bool {
         // Check if the format string is valid (you can implement your own validation logic here)
         format == "%Y-%m-%d" || format == "%d.%m.%Y" || format == "%d/%m/%Y"

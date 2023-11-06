@@ -45,8 +45,7 @@ impl DB {
         stmt.bind(5, format)?;
     
         let mut cursor = stmt.cursor();
-        cursor.next()?;
-        conn.execute("COMMIT;")?;
+        cursor.next().unwrap();
         Ok(())
     }
     
