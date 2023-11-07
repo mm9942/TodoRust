@@ -65,16 +65,16 @@ impl Display for ArgErr {
 }
 impl std::error::Error for ArgErr {}
 
-#[derive(Parser, Debug, PartialEq)]
+#[derive(Parser, Debug, PartialEq, Default)]
 #[command(name = "tasks", version = "0.1.0", long_about = "A task manager for better management of a time")]
 pub struct Args {
     #[arg(short='n', long="new", help="Create a new task")]
     new: bool,
 
-    #[arg(short='d', long="date", help="Define a date for the new task or to set due date")]
+    #[arg(long="date", help="Define a date for the new task or to set due date")]
     date: Option<String>,
 
-    #[arg(short='t', long="task", help="Define wich task to address")]
+    #[arg(short='i', long="task_id", help="Define wich task to address")]
     task_id: Option<i16>,
     
     #[arg(long="title", help="Define a title for the new task")]
@@ -92,7 +92,7 @@ pub struct Args {
     #[arg(long="set_due_date", help="Set due date")]
     set_due_date: bool,
 
-    #[arg(long="done", help="Set task as finished")]
+    #[arg(short='d', long="done", help="Set task as finished")]
     done: bool,
 
     #[arg(short = 'c', long="check", help="Check if date already has passed")]
@@ -117,12 +117,65 @@ impl Args {
             format: None,
         }
     }
-    pub fn parse(&mut self) -> Self {
+    fn parse() -> Self {
         let mut args: Args = Args::new();
-        let args = args.parse();
+        let args = Parser::parse();
         args
     }
-    pub fn check(&mut self, db: DB) -> Result<(), ArgErr> {
+    pub fn check(&mut self, mut db: DB) -> Result<(), ArgErr> {
+        let todo = Todo::get_todo();
+        let mut tasks = todo.tasks.clone();
+        if self.new {
+            let title = self.get_title()?;
+            let description = self.get_description()?;
+            let due_date = self.date()?;
+            let format = self.get_format().unwrap_or_else(|_| "%Y-%m-%d".to_string());
+
+            db.insert(&title, &description, false, Some(due_date), &format);
+            println!("New task created successfully.");
+        }
+
+        // Logic for listing tasks
+        if self.list {
+            let list = todo.list().unwrap();
+            println!("List of tasks: {}", list);
+        }
+
+        // Logic for removing a task
+        if self.remove {
+            let task_id = self.get_task_id().unwrap() as usize - 1; // Convert to i32
+            db::remove(todo.tasks[task_id].get_task());
+            println!("Task {} removed successfully.", task_id + 1);
+        }
+
+        // Logic for setting the due date of a task
+        if self.set_due_date {
+            let task_id = self.get_task_id().unwrap() as usize - 1; // Convert to i32
+            let due_date = self.date()?;
+            db::due_date(todo.tasks[task_id].get_task(), &due_date.format("%Y-%m-%d").to_string());
+            println!("Due date set for task {}.", task_id + 1);
+        }
+
+        // Logic for marking a task as done
+        if self.done {
+            let task_id = self.get_task_id().unwrap() as usize - 1; // Convert to i32
+            db::done(todo.tasks[task_id].get_task()).unwrap();
+            println!("Task {} marked as done.", task_id + 1);
+        }
+
+        // Logic for checking a task's status
+        if self.check {
+            //let task_id = self.get_task_id()? as i32; // Convert to i32
+            //let status = db.check_status(task_id)?;
+            //println!("Status of task {}: {}", task_id, status);
+        }
+
+        // Additional flags logic can be added here
+
+        Ok(())
+    }
+
+    /*pub fn check(&mut self, db: DB) -> Result<(), ArgErr> {
         let mut required_id = false;
         let mut required_for_new = false;
         let mut required_date = false;
@@ -142,12 +195,11 @@ impl Args {
         let todo = Todo::get_todo();
         let Args = Args::new();
     
-        let args = self.parse();
         let mut new_task = Tasks::new();
         let mut db = DB::new("tasks.db".to_string());
         
-        let args = self.parse();
-        let mut val_args = self.parse();
+        let args = Args::parse();
+        let val_args = Args::parse();
 
         let mut task = Tasks::new();
         let todo = Todo::get_todo();
@@ -177,7 +229,8 @@ impl Args {
         }
 
         if self.list {
-            todo.list();
+            let list = todo.list();
+            println!("List of tasks: {:?}", list)
         }
 
         if self.remove {
@@ -195,7 +248,7 @@ impl Args {
         }
         
         Ok(())
-    }
+    }*/
 
     pub fn get_new_task(&mut self, title: String, description: String, date: String, format: String) {
         let mut task = Tasks::new();
@@ -211,12 +264,13 @@ impl Args {
     }
 
     fn check_required_date(&self) -> Result<bool, ArgErr> {
-        match self.date.is_none() {
-            false => Ok(true),
-            true => Ok(false),
-            _ => Err(ArgErr::InvalidDate),
+        if self.date.is_some() {
+            Ok(true)
+        } else {
+            Err(ArgErr::InvalidDate)
         }
     }
+    
 
     fn check_required_id(&self) -> Result<bool, ArgErr> {
         match self.task_id.is_none() {
@@ -246,8 +300,50 @@ impl Args {
             String::new()
         }
     }
-
+    /*
     // Getters for title, description, and format have been adjusted to not use ?
+    fn get_title(&mut self) -> Result<String, ArgErr> {
+        if self.check_required_for_new().unwrap() {
+            self.title.clone().ok_or(ArgErr::InvalidTitle)
+        } else {
+            self.title = Some("".to_string());
+
+            Ok(self.title.clone().unwrap())
+        }
+    }
+
+    fn get_description(&mut self) -> Result<String, ArgErr> {
+        
+        if self.check_required_for_new().unwrap() {
+            self.description.clone().ok_or(ArgErr::InvalidDescription)
+        } else {
+            self.description = Some("".to_string());
+
+            Ok(self.description.clone().unwrap())
+        }
+    }
+
+    fn get_format(&mut self) -> Result<String, ArgErr> {
+        
+        if self.check_required_for_new().unwrap() {
+            self.format.clone().ok_or(ArgErr::InvalidFormat)
+        } else {
+            self.format = Some("%Y-%m-%d".to_string());
+
+            Ok(self.format.clone().unwrap())
+        }
+    }
+
+    // Corrected get_task_id to return Result
+    fn get_task_id(&mut self) -> Result<i16, ArgErr> {
+        if self.check_required_id().unwrap() {
+            self.task_id.ok_or(ArgErr::InvalidTaskId)
+        } else {
+            self.task_id = Some(0);
+
+            Ok(self.task_id.unwrap())
+        }
+    } */
     fn get_title(&self) -> Result<String, ArgErr> {
         self.title.clone().ok_or(ArgErr::InvalidTitle)
     }
@@ -260,21 +356,30 @@ impl Args {
         self.format.clone().ok_or(ArgErr::InvalidFormat)
     }
 
-    // Corrected get_task_id to return Result
     fn get_task_id(&self) -> Result<i16, ArgErr> {
         self.task_id.ok_or(ArgErr::InvalidTaskId)
     }
 
 }
 fn main() {
-    let todo = Todo::get_todo();
-    let mut db = DB::new("tasks.db".to_string());
-    let mut Args = Args::new();
-    let _ = Args.parse();
-    if Args == Args::new() {
-        let _ = todo.clone().interactive_mode().unwrap();
+    // Create a DB instance
+    let db = DB::new("tasks.db".to_string());
+
+    // Parse command-line arguments using clap
+    let mut args = Args::parse();
+
+    // If no command-line arguments are provided, enter interactive mode
+    if args == Args::default() {
+        let todo = Todo::get_todo();
+        if let Err(e) = todo.interactive_mode() {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     } else {
-        let _ = Args.check(db);
+        // Process the command-line arguments
+        if let Err(e) = args.check( db) {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     }
-   
 }

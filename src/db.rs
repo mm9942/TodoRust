@@ -100,7 +100,6 @@ pub fn done(title: &str) -> Result<(), Box<dyn Error>> {
         stmt
     )
     .unwrap();
-    conn.execute("COMMIT;")?;
     Ok(())
 }
 pub fn update(column: &str, value: &str, title: &str) -> Result<(), Box<dyn Error>> {
