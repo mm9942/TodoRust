@@ -323,4 +323,7 @@ impl Todo {
         let todo = Todo::new(tasks);
         todo
     }
+    fn get_tasks(&self) -> Vec<Tasks> {
+        self.tasks.clone()
+    }
 }

@@ -56,7 +56,7 @@ impl Tasks {
             format,
         }
     }
-    pub fn task(&mut self, id: i32, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
+    pub fn task(&mut self, id: i32, task: &str, description: &str, due_date: Option<&str>, format: Option<&str>) -> Result<Self, TasksErr> {
         let parsed_due_date = match due_date {
             Some(date_str) => match Self::parse_date(date_str) {
                 Ok(date) => Some(date),
@@ -69,13 +69,21 @@ impl Tasks {
             return Err(TasksErr::FailedToAddTask);
         }
 
+        let mut format = match format {
+            Some(format_str) => match Self::is_valid_format(format.unwrap()) {
+                true => format_str.to_string(),
+                false => "%m/%d/%Y".to_string(),
+            },
+            None => "%m/%d/%Y".to_string(),
+        };
+
         Ok(Self {
             id,
             task: task.to_string(),
             done: false,
             description: description.to_string(),
             due_date: parsed_due_date,
-            format: "%m/%d/%Y".to_string(),
+            format: format,
         })
     } 
     pub fn add(id: i32, task: &str, description: &str, due_date: Option<&str>) -> Result<Self, TasksErr> {
