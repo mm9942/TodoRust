@@ -45,7 +45,7 @@ impl Tasks {
         let task = "".to_string(); 
         let done = false;
         let description = "".to_string();
-        let due_date = None;
+        let due_date: Option<NaiveDate> = None;
         let format = "%m/%d/%Y".to_string();
         Self {
             id,
@@ -203,8 +203,15 @@ impl Display for Tasks {
             .unwrap_or("No due date".to_string());
         write!(
             f,
-            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n",
-            self.task, self.done, self.description, due_date_str, self.format
+            "\tDB ID:\t\t{}\n\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n",
+            self.id, self.task, self.done, self.description, due_date_str, self.format
         )
     }
+}
+
+pub fn parse_date(date_str: &str) -> Result<NaiveDate, TasksErr> {
+    DATE_FORMATS
+        .iter()
+        .find_map(|&format| NaiveDate::parse_from_str(date_str, format).ok())
+        .ok_or(TasksErr::InvalidDateFormat)
 }

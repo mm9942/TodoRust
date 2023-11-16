@@ -1,9 +1,9 @@
 pub use crate::tasks::{Tasks, TasksErr};
 pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
-use crate::db::{remove, done, update, due_date, set_format, DB};
+use crate::db::{remove, done, update, set_format, DB, set_due_date};
 
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Local};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Todo {
     pub tasks: Vec<Tasks>,
@@ -104,7 +104,7 @@ impl Todo {
                             continue;
                         }
                         let i = i - 1;  // Adjust for 1-based indexing
-                        let _ = done(self.tasks[i].get_task());
+                        let _ = done(self.tasks[i].get_id() as usize);
                         let done_result = self.tasks[i].done();
                         match done_result {
                             Ok(_) => println!("Task marked as done successfully:\n{}", self.tasks[i].clone()),
@@ -126,7 +126,7 @@ impl Todo {
                             continue;
                         }
                         let i = i - 1;  // Adjust for 1-based indexing
-                        let _ = remove(self.tasks[i].get_task());
+                        let _ = remove(self.tasks[i].get_id() as usize);
                         self.tasks.remove(i);
                     } else {
                         eprintln!("Invalid task number entered");
@@ -147,10 +147,10 @@ impl Todo {
                         let _ = self.tasks[i].set_due_date(input_vec[2]);
                         let _ = t.set_due_date(input_vec[2]);
                         let date_str = format!("{}", t.get_due_date().unwrap());
-                        let _ = update("due_date", &date_str, self.tasks[i].get_task());
+                        let _ = update("due_date", &date_str, self.tasks[i].get_id() as usize);
                         match self.tasks[i].set_due_date(input_vec[2]) {
                             Ok(_) => {
-                                match due_date(input_vec[2], self.tasks[i].get_task()) {
+                                match set_due_date(input_vec[2], self.tasks[i].get_id() as usize) {
                                     Ok(_) => (),
                                     Err(e) => eprintln!("Failed to update due_date: {}", e),
                                 }
@@ -176,10 +176,10 @@ impl Todo {
                         let i = i - 1;  // Adjust for 1-based indexing
                         let format = input_vec[2];
                         let _ = self.tasks[i].set_format(format);
-                        let _ = update("format", format, self.tasks[i].get_task());
+                        let _ = update("format", format, self.tasks[i].get_id() as usize);
                         match self.tasks[i].set_format(format) {
                             Ok(_) => {
-                                match set_format(format, self.tasks[i].get_task()) {
+                                match set_format(format, self.tasks[i].get_id() as usize) {
                                     Ok(_) => (),
                                     Err(e) => eprintln!("Failed to update format: {}", e),
                                 }
@@ -278,6 +278,23 @@ impl Todo {
             } else {
                 let task = self.tasks[input_task_id - 1].clone();
                 return Ok(task);
+            }
+        }
+    }
+    pub fn check(&self, task_id: usize) -> Result<String, TasksErr> {
+        let mut current_date = Local::now().naive_local().date();
+        let task = self.tasks[task_id - 1].clone();
+        let date: NaiveDate = task.get_due_date().unwrap();
+        if let equal = date == current_date {
+            let task_str = format!("Task: {} needs to be finished today!", task.get_id());
+            return Ok(task_str);
+        } else {
+            if let passed = date < current_date {
+                let task_str = format!("Task: {} the date has already passed and lays in the past!", task.get_id());
+                return Ok(task_str);
+            } else {
+                let task_str = format!("Task: {} should be finished until: {}!", task.get_id(), date);
+                return Ok(task_str);
             }
         }
     }
