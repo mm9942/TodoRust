@@ -203,8 +203,8 @@ impl Display for Tasks {
             .unwrap_or("No due date".to_string());
         write!(
             f,
-            "\tDB ID:\t\t{}\n\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n",
-            self.id, self.task, self.done, self.description, due_date_str, self.format
+            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n", /* "\tDB ID:\t\t{}\n" */
+            /*self.id, */ self.task, self.done, self.description, due_date_str, self.format
         )
     }
 }

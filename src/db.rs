@@ -93,7 +93,7 @@ pub fn remove(id: usize) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn done_old(id: usize) -> Result<(), Box<dyn Error>> {
+pub fn done(id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
     let mut stmt = format!("UPDATE tasks SET Done = true WHERE id = {};", id);
     conn.execute(
@@ -103,10 +103,11 @@ pub fn done_old(id: usize) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn done(id: usize) -> Result<(), Box<dyn Error>> {
+pub fn done_new(id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = conn.prepare("UPDATE tasks SET Done = true WHERE id = ?")?;
-    stmt.bind(1, id as i64)?;
+    let mut stmt = conn.prepare("UPDATE tasks SET Done = ? WHERE id = ?")?;
+    stmt.bind(1, "true")?;
+    stmt.bind(2, id as i64)?;
     stmt.next().unwrap();
     conn.execute("COMMIT;")?;
     Ok(())
@@ -121,25 +122,25 @@ pub fn update(column: &str, value: &str, id: usize) -> Result<(), Box<dyn Error>
     conn.execute("COMMIT;")?;
     Ok(())
 }
-pub fn set_due_date_old(value: &str, id: usize) -> Result<(), Box<dyn Error>> {
+pub fn set_due_date(value: String, id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
     let mut stmt = format!("UPDATE tasks SET due_date = '{}' where id = {};", value , id);
     conn.execute(
         stmt
     )
     .unwrap();
-    conn.execute("COMMIT;")?;
+    //conn.execute("COMMIT;")?;
     Ok(())
 }
-pub fn set_due_date(value: &str, id: usize) -> Result<(), Box<dyn Error>> {
+/*pub fn set_due_date(value: String, id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
     let mut stmt = conn.prepare("UPDATE tasks SET SET due_date = ? WHERE id = ?")?;
-    stmt.bind(1, value)?;
+    stmt.bind(1, value.as_str())?;
     stmt.bind(2, id as i64)?;
     stmt.next().unwrap();
     conn.execute("COMMIT;")?;
     Ok(())
-}
+}*/
 pub fn set_format(value: &str, id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
     let mut stmt = conn.prepare("UPDATE tasks SET format = ? WHERE id = ?")?;

@@ -150,7 +150,7 @@ impl Todo {
                         let _ = update("due_date", &date_str, self.tasks[i].get_id() as usize);
                         match self.tasks[i].set_due_date(input_vec[2]) {
                             Ok(_) => {
-                                match set_due_date(input_vec[2], self.tasks[i].get_id() as usize) {
+                                match set_due_date(input_vec[2].to_string(), self.tasks[i].get_id() as usize) {
                                     Ok(_) => (),
                                     Err(e) => eprintln!("Failed to update due_date: {}", e),
                                 }

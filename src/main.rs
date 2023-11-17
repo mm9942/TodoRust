@@ -27,8 +27,13 @@ use std::{
 };
 use std::convert::From;
 
-//use std::result::Result;
-#[derive(Debug)] // This is necessary to comply with the Error trait
+#[derive(Debug, PartialEq, Clone, Copy)]
+enum Operation {
+    Done,
+    Remove,
+}
+
+#[derive(Debug)]
 enum ArgErr {
     InvalidDate,
     InvalidTaskId,
@@ -76,17 +81,18 @@ fn cli() -> Command {
         )
         .author("mm29942, mm29942@pm.me")
         .display_name("RustTodo")
-        .arg(arg!(-c --check "Check if the finishing date is today.").action(ArgAction::SetTrue))
-        .arg(arg!(-l --list "List all available tasks.").action(ArgAction::SetTrue))
+        .arg(arg!(-c --check "Check if the finishing date is today.").action(ArgAction::SetTrue).required(false))
+        .arg(arg!(-l --list "List all available tasks.").action(ArgAction::SetTrue).required(false))
+        .arg(arg!(--cli "Start interactive prompt controler.").action(ArgAction::SetTrue).required(false))
+        .arg(arg!(-d --done <DONE> "Mark task as completed").required(false))
+        .arg(arg!(-r --remove <REMOVE> "Remove the selected task").required(false))
         .subcommand(
             Command::new("task")
                 .about("Edit an already existing task")
-                .arg(arg!(-i --task_id <TASK_ID> "").default_value("0").required(true))
-                .arg(arg!(-c --completed "").action(ArgAction::SetTrue).required(false))
-                .arg(arg!(-r --remove "").action(ArgAction::SetTrue).required(false))
+                .arg(arg!(-i --task_id <TASK_ID> "Set the task's id").default_value("0").required(true))
                 .arg(arg!(--date <DATE> "Set a new or change the due date value for when the selected task should be completed.").required(false))
                 .arg(arg!(-f --format <FORMAT> "Set a new format to display the date in.").default_value("%m/%d/%Y").required(false))
-                .arg(arg!(-d --description  <DESCRIPTION> "Change description of the selected task").required(false))
+                .arg(arg!(-d --description <DESCRIPTION> "Change description of the selected task").required(false))
         )
         .subcommand(
             Command::new("new")
@@ -118,29 +124,37 @@ fn check() {
         let id_str = sub_matches.get_one::<String>("task_id");
         let id: usize = id_str.expect("REASON").parse().unwrap();
         let mut task_id: usize = (id - 1).try_into().unwrap();
-
-        
         let format_str = sub_matches.get_one::<String>("format");
-        let format = format_str.unwrap().as_str();
-        
+        let format = if let Some(format_str) = format_str {
+            set_format(format_str, todo.tasks[task_id].get_id().try_into().unwrap())
+        } else {
+            Ok(())
+        };
+
         let description_str = sub_matches.get_one::<String>("description");
-        let description = description_str.unwrap().as_str();
+        let description = if let Some(description_str) = description_str {
+            set_description(description_str, todo.tasks[task_id].get_id().try_into().unwrap())
+        } else {
+            Ok(())
+        };
 
         let date_str = sub_matches.get_one::<String>("date");
         if let Some(date_str) = date_str {
             match Tasks::parse_date(date_str) {
                 Ok(date) => {
-                    let _ = task.task(task_id as i32, &title, &description, Some(&date.format("%Y-%m-%d").to_string()), Some(&format));
-                    //let _ = task.task(task_id as i32, &title, &description, Some(&date), Some(&format));
+                    let date_str_new = date.format("%m/%d/%Y").to_string();
+                    let mut task_new = todo.tasks.clone();
+                    let mut task: &mut Tasks = &mut task_new[task_id];
+                    let id = task.get_id() as usize;
+                    let _ = task.set_due_date(date_str_new.as_str()).unwrap();
+                    println!("{} {} \n{}",id, date_str_new, &task.get_due_date().unwrap().format("%m/%d/%Y").to_string());
+                    set_due_date(task.get_due_date().unwrap().format("%Y-%d-%m").to_string(), id).expect("wrong date was included!")
                 },
                 Err(_) => {
                     eprintln!("Invalid date format provided.");
-                    return; // Or handle the error appropriately
                 }
-                //_ => task.task(task_id as i32, &title, &description, None, Some(&format)),
             }
         }
-        //let _ = task.task(task_id as i32, &title, &description, Some(&date), Some(&format));
     } 
     if let Some(sub_matches) = matches.subcommand_matches("new") {
         let format_str = sub_matches.get_one::<String>("format").expect("Not a string").as_str();
@@ -168,40 +182,51 @@ fn check() {
         db.insert(title, description, false, task.get_due_date(), format).unwrap();
     }
 
-    if task.get_id() != 0 && description != "" {
-        let _ = set_description(&description, todo.tasks[task_id as usize].get_id().try_into().unwrap());
-    } 
-    
-    if task.get_id() != 0 && date != "" {
-        let _ = set_due_date(&date, todo.tasks[task_id as usize].get_id().try_into().unwrap());
-    }
-
-    if task.get_id() != 0 && format != "" {
-        let _ = set_format(&format, todo.tasks[task_id as usize].get_id().try_into().unwrap());
-    }
-
-    if task.get_id() != 0 && matches.get_flag("completed") {
-        let _ = done(todo.tasks[task_id as usize].get_id().try_into().unwrap());
-    }
-
-    if task.get_id() != 0 && matches.get_flag("remove") {
-        println!("Removing task with ID: {}", task_id);
-        let _ = remove(todo.tasks[task_id as usize].get_id().try_into().unwrap());
-    }
-
     let mut todo = Todo::get_todo();
 
     if matches.get_flag("list") {
         let list = todo.list();
         println!("{}", list.unwrap())
     }
+
+    if matches.get_flag("cli") {
+        let _ = todo.clone().interactive_mode();
+    }
+
     if matches.get_flag("check") {
         let _ = todo.check(todo.tasks[task_id as usize].get_id().try_into().unwrap());    
     }
+
+    if let Some(done_str) = matches.get_one::<String>("done") {
+        if let Ok(done_id) = done_str.parse::<usize>() {
+            let _ = done(todo.tasks[done_id - 1].get_id().try_into().unwrap());
+        } else {
+            eprintln!("Invalid task ID provided for done.");
+        }
+    }
+
+    if let Some(remove_str) = matches.get_one::<String>("remove") {
+        if let Ok(remove_id) = remove_str.parse::<usize>() {
+            let _ = remove(todo.tasks[remove_id - 1].get_id().try_into().unwrap()).expect("Error processing remove operation");
+        } else {
+            eprintln!("Invalid task ID provided for remove.");
+        }
+    }
+
+    
 }
 
 fn main() {
     // Create a DB instance
     let db = DB::new("tasks.db".to_string());
     let _ = check();
+}
+
+fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
+    if task == Operation::Done {
+        done(task_id.try_into().unwrap())?; // Use done function
+    } else if task == Operation::Remove {
+        remove(task_id.try_into().unwrap())?; // Use remove function
+    }
+    Ok(())
 }
