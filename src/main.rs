@@ -81,9 +81,9 @@ fn cli() -> Command {
         )
         .author("mm29942, mm29942@pm.me")
         .display_name("RustTodo")
-        .arg(arg!(-c --check "Check if the finishing date is today.").action(ArgAction::SetTrue).required(false))
+        .arg(arg!(--check "Check if the finishing date is today.").action(ArgAction::SetTrue).required(false))
         .arg(arg!(-l --list "List all available tasks.").action(ArgAction::SetTrue).required(false))
-        .arg(arg!(--cli "Start interactive prompt controler.").action(ArgAction::SetTrue).required(false))
+        .arg(arg!(-c --cli "Start interactive prompt controler.").action(ArgAction::SetTrue).required(false))
         .arg(arg!(-d --done <DONE> "Mark task as completed").required(false))
         .arg(arg!(-r --remove <REMOVE> "Remove the selected task").required(false))
         .subcommand(
