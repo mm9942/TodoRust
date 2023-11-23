@@ -193,7 +193,7 @@ fn check() {
     }
 
     if matches.get_flag("check") {
-        let _ = todo.check(todo.tasks[task_id as usize].get_id().try_into().unwrap());    
+        let _ = todo.check_all();
     }
 
     if let Some(done_str) = matches.get_one::<String>("done") {

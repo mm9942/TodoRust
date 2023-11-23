@@ -295,6 +295,33 @@ impl Todo {
             }
         }
     }
+    pub fn check_all(&self) -> Result<(), TasksErr> {
+        let current_date = Local::now().naive_local().date();
+
+        for (index, task) in self.tasks.iter().enumerate() {
+            if task.done {
+                println!("Task {} is already completed.", index + 1);
+                continue;
+            }
+            let task_id = task.get_id();
+            match task.get_due_date() {
+                Some(due_date) => {
+                    if due_date == current_date {
+                        println!("Task {} needs to be finished today!", index + 1);
+                    } else if due_date < current_date {
+                        println!("Task {} the date has already passed and lays in the past!", index + 1);
+                        let _ = done(task_id.try_into().unwrap());
+                    } else {
+                        println!("Task {} should be finished until: {}!", index + 1, due_date);
+                    }
+                },
+                None => {
+                    println!("Task {} does not have a due date set.", index + 1);
+                }
+            }
+        }
+        Ok(())
+    }
     pub fn get_task_by_id(&mut self, task_id: usize) -> Result<Tasks, TasksErr> {
         if task_id >= self.tasks.len() {
             eprintln!("Invalid task number entered");
