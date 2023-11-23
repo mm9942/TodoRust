@@ -141,10 +141,8 @@ fn check() {
         let date_str = sub_matches.get_one::<String>("date");
         if let Some(date_str) = date_str {
             let formatted_date_str = if date_str.len() == 8 && date_str.chars().nth(6) == Some('/') {
-                // If the date has a two-digit year, format it to a four-digit year
                 format!("20{}", date_str)
             } else {
-                // If the date is already in the correct format, use it as is
                 date_str.to_string()
             };
 
@@ -176,9 +174,8 @@ fn check() {
                 },
                 Err(_) => {
                     eprintln!("Invalid date format provided.");
-                    return; // Or handle the error appropriately
+                    return;
                 }
-                //_ => task.task(task_id as i32, &title, &description, None, Some(&format)),
             }
         }
         db.insert(title, description, false, task.get_due_date(), format).unwrap();
@@ -219,16 +216,15 @@ fn check() {
 }
 
 fn main() {
-    // Create a DB instance
     let db = DB::new("tasks.db".to_string());
     let _ = check();
 }
 
 fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
     if task == Operation::Done {
-        done(task_id.try_into().unwrap())?; // Use done function
+        done(task_id.try_into().unwrap())?;
     } else if task == Operation::Remove {
-        remove(task_id.try_into().unwrap())?; // Use remove function
+        remove(task_id.try_into().unwrap())?;
     }
     Ok(())
 }
