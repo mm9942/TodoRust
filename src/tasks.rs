@@ -160,7 +160,6 @@ impl Tasks {
     }
 
     pub fn is_valid_format(format: &str) -> bool {
-        // Check if the format string is valid (you can implement your own validation logic here)
         format == "%Y-%m-%d" || format == "%d.%m.%Y" || format == "%d/%m/%Y"
     }
 
