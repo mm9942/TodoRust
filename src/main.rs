@@ -148,7 +148,7 @@ fn check() {
 
             match Tasks::parse_date(&formatted_date_str) {
                 Ok(date) => {
-                    set_due_date(date_str.to_string(), id).unwrap();
+                    set_due_date(date_str.to_string(), todo.tasks[task_id].get_id().try_into().unwrap()).unwrap();
                 },
                 Err(_) => {
                     eprintln!("Invalid date format provided.");
@@ -159,26 +159,40 @@ fn check() {
     if let Some(sub_matches) = matches.subcommand_matches("new") {
         let format_str = sub_matches.get_one::<String>("format").expect("Not a string").as_str();
         let format = format_str;
-        
+
         let title_str = sub_matches.get_one::<String>("title");
         let title = title_str.unwrap().as_str();
-        
+
         let description_str = sub_matches.get_one::<String>("description");
         let description = description_str.unwrap().as_str();
 
         let date_str = sub_matches.get_one::<String>("date");
         if let Some(date_str) = date_str {
-            match Tasks::parse_date(date_str) {
-                Ok(date) => {
-                    let _ = task.task(task_id as i32, &title, &description, Some(&date.format("%Y-%m-%d").to_string()), Some(&format));
-                },
-                Err(_) => {
+            let formatted_date_str = if date_str.len() == 8 && date_str.chars().nth(2) == Some('/') && date_str.chars().nth(5) == Some('/') {
+                let parts: Vec<&str> = date_str.split('/').collect();
+                if parts.len() == 3 && parts[2].len() == 2 {
+                    format!("{}-{}-20{}", parts[1], parts[0], parts[2])
+                } else {
                     eprintln!("Invalid date format provided.");
                     return;
                 }
+            } else {
+                eprintln!("Invalid date format provided.");
+                return;
+            };
+
+            match NaiveDate::parse_from_str(&formatted_date_str, "%m-%d-%Y") {
+                Ok(parsed_date) => {
+                    db.insert(title, description, false, Some(parsed_date), format).unwrap();
+                },
+                Err(_) => {
+                    eprintln!("Error parsing date string.");
+                    return;
+                }
             }
+        } else {
+            db.insert(title, description, false, None, format).unwrap();
         }
-        db.insert(title, description, false, task.get_due_date(), format).unwrap();
     }
 
     let mut todo = Todo::get_todo();

@@ -30,7 +30,7 @@ impl DB {
         let mut due_date_str = String::new();
         match due_date {
             Some(due_date) => {
-                due_date_str = due_date.format("%Y-%m-%d").to_string();
+                due_date_str = due_date.format("%d/%m/%Y").to_string();
             },
             None => {
                 // Handle null value for due_date if necessary
