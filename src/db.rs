@@ -122,23 +122,13 @@ pub fn update(column: &str, value: &str, id: usize) -> Result<(), Box<dyn Error>
     conn.execute("COMMIT;")?;
     Ok(())
 }
-/*pub fn set_due_date(value: String, id: usize) -> Result<(), Box<dyn Error>> {
-    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = format!("UPDATE tasks SET due_date = '{}' where id = {};", value , id);
-    conn.execute(
-        stmt
-    )
-    .unwrap();
-    conn.execute("COMMIT;")?;
-    Ok(())
-}*/
 pub fn set_due_date(value: String, id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = conn.prepare("UPDATE tasks SET due_date = '?' WHERE id = ?")?;
+    let mut stmt = conn.prepare("UPDATE tasks SET due_date = ? WHERE id = ?")?;
     stmt.bind(1, value.as_str())?;
     stmt.bind(2, id as i64)?;
     stmt.next().unwrap();
-    conn.execute("COMMIT;")?;
+    //conn.execute("COMMIT;")?;
     Ok(())
 }
 pub fn set_format(value: &str, id: usize) -> Result<(), Box<dyn Error>> {

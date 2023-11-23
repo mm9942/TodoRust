@@ -142,13 +142,14 @@ fn check() {
         if let Some(date_str) = date_str {
             match Tasks::parse_date(date_str) {
                 Ok(date) => {
-                    let date_str_new = date.format("%m/%d/%Y").to_string();
+                    let date_str_new = date.format("%d/%m/%Y").to_string();
                     let mut task_new = todo.tasks.clone();
                     let mut task: &mut Tasks = &mut task_new[task_id];
                     let id = task.get_id() as usize;
                     let _ = task.set_due_date(date_str_new.as_str()).unwrap();
-                    println!("{} {} \n{}",id, date_str_new, &task.get_due_date().unwrap().format("%m/%d/%Y").to_string());
-                    set_due_date(task.get_due_date().unwrap().format("%Y-%d-%m").to_string(), id).expect("wrong date was included!")
+                    println!("{} {} \n{}",id, date_str_new, &task.get_due_date().unwrap().format("%d/%m/%Y").to_string());
+                    set_due_date(date.format("%d/%m/%Y").to_string() /*task.get_due_date().unwrap().format("%d/%m/%Y").to_string()*/, id).unwrap()
+
                 },
                 Err(_) => {
                     eprintln!("Invalid date format provided.");
@@ -217,16 +218,15 @@ fn check() {
 }
 
 fn main() {
-    // Create a DB instance
     let db = DB::new("tasks.db".to_string());
     let _ = check();
 }
 
 fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
     if task == Operation::Done {
-        done(task_id.try_into().unwrap())?; // Use done function
+        done(task_id.try_into().unwrap())?;
     } else if task == Operation::Remove {
-        remove(task_id.try_into().unwrap())?; // Use remove function
+        remove(task_id.try_into().unwrap())?;
     }
     Ok(())
 }

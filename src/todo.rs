@@ -103,7 +103,7 @@ impl Todo {
                             eprintln!("Invalid task number entered");
                             continue;
                         }
-                        let i = i - 1;  // Adjust for 1-based indexing
+                        let i = i - 1;
                         let _ = done(self.tasks[i].get_id() as usize);
                         let done_result = self.tasks[i].done();
                         match done_result {
@@ -125,7 +125,7 @@ impl Todo {
                             eprintln!("Invalid task number entered");
                             continue;
                         }
-                        let i = i - 1;  // Adjust for 1-based indexing
+                        let i = i - 1;
                         let _ = remove(self.tasks[i].get_id() as usize);
                         self.tasks.remove(i);
                     } else {
@@ -161,8 +161,7 @@ impl Todo {
                         eprintln!("Invalid task number entered. Usage: set_due_date <task_number> <due_date>");
                     }
                 }
-                
-                //format 4 %Y-%m-%d
+
                 "set_format" | "format"=> {
                     if input_vec.len() < 3 {
                         eprintln!("Usage: set_format <task_number> <format>");
@@ -173,7 +172,7 @@ impl Todo {
                             eprintln!("Invalid command entered. Usage: set_format <task_number> <format>");
                             continue;
                         }
-                        let i = i - 1;  // Adjust for 1-based indexing
+                        let i = i - 1;
                         let format = input_vec[2];
                         let _ = self.tasks[i].set_format(format);
                         let _ = update("format", format, self.tasks[i].get_id() as usize);
@@ -244,7 +243,6 @@ impl Todo {
         let mut result_finished = String::new();
         let mut result_unfinished = String::new();
 
-        // Iterate over tasks and categorize them as finished or unfinished.
         for (index, task) in self.tasks.iter().enumerate() {
             if task.done {
                 result_finished.push_str(&format!("\nTask {}:\n{}\n", index + 1, task));
@@ -253,15 +251,14 @@ impl Todo {
             }
         }
 
-        let mut result = String::new(); // Initialize the result string.
+        let mut result = String::new();
 
-        // Conditionally concatenate the finished and unfinished tasks to the result.
         if !result_finished.is_empty() {
             result.push_str(&format!("\nFinished tasks:\n{}", result_finished));
         }
         if !result_unfinished.is_empty() {
             if !result.is_empty() {
-                result.push_str("\n"); // Add a newline to separate the finished and unfinished tasks if both are present.
+                result.push_str("\n");
             }
             result.push_str(&format!("\nUnfinished tasks:\n{}", result_unfinished));
         }
@@ -314,7 +311,6 @@ impl Todo {
         let connection = sqlite3::open("tasks.db").unwrap();
         let mut tasks = Vec::new();
 
-        // Query the database and fill the tasks vector
         connection.iterate("SELECT * FROM tasks", |pairs| {
             let mut task = Tasks::new();
             for &(column, value) in pairs.iter() {
@@ -322,7 +318,15 @@ impl Todo {
                     "id" => task.id = value.unwrap_or_default().parse().unwrap_or_default(),
                     "task" => task.task = value.unwrap_or_default().to_string(),
                     "description" => task.description = value.unwrap_or_default().to_string(),
-                    "due_date" => task.due_date = value.and_then(|date| NaiveDate::parse_from_str(date, &task.format).ok()),
+                    "due_date" => {
+                        println!("{}", value.unwrap_or_default().to_string());
+                        if let Some(date) = value {
+                            task.due_date = NaiveDate::parse_from_str(date, "%d/%m/%y")
+                                .or_else(|_| NaiveDate::parse_from_str(date, "%d/%m/%Y"))
+                                .or_else(|_| NaiveDate::parse_from_str(date, "%Y-%m-%d"))
+                                .ok();
+                        }
+                    },
                     "done" => task.done = {
                         match value.unwrap_or_default().parse().unwrap_or_default() {
                             0 => false,

@@ -196,21 +196,24 @@ impl Tasks {
 }
 impl Display for Tasks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let due_date_str = self
-            .due_date
-            .map(|date| date.format(&self.format).to_string())
-            .unwrap_or("No due date".to_string());
+        let due_date_str = match self.due_date {
+            Some(date) => date.format(&self.format).to_string(),
+            None => "Due date not set".to_string(),
+        };
+
+        let done_status = if self.done { "Completed" } else { "Pending" };
+
         write!(
             f,
-            "\tTask:\t\t{}\n\tDone:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n", /* "\tDB ID:\t\t{}\n" */
-            /*self.id, */ self.task, self.done, self.description, due_date_str, self.format
+            "\tID:\t\t{}\n\tTask:\t\t{}\n\tStatus:\t\t{}\n\tDescription:\t{}\n\tDue Date:\t{}\n\tFormat:\t\t{}\n",
+            self.id, self.task, done_status, self.description, due_date_str, self.format
         )
     }
 }
 
+
 pub fn parse_date(date_str: &str) -> Result<NaiveDate, TasksErr> {
-    DATE_FORMATS
-        .iter()
-        .find_map(|&format| NaiveDate::parse_from_str(date_str, format).ok())
-        .ok_or(TasksErr::InvalidDateFormat)
+    NaiveDate::parse_from_str(date_str, "%d/%m/%y")
+        .or_else(|_| NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
+        .map_err(|_| TasksErr::InvalidDateFormat)
 }
