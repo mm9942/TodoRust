@@ -140,21 +140,22 @@ fn check() {
 
         let date_str = sub_matches.get_one::<String>("date");
         if let Some(date_str) = date_str {
-            match Tasks::parse_date(date_str) {
-                Ok(date) => {
-                    let date_str_new = date.format("%d/%m/%Y").to_string();
-                    let mut task_new = todo.tasks.clone();
-                    let mut task: &mut Tasks = &mut task_new[task_id];
-                    let id = task.get_id() as usize;
-                    let _ = task.set_due_date(date_str_new.as_str()).unwrap();
-                    println!("{} {} \n{}",id, date_str_new, &task.get_due_date().unwrap().format("%d/%m/%Y").to_string());
-                    set_due_date(date.format("%d/%m/%Y").to_string() /*task.get_due_date().unwrap().format("%d/%m/%Y").to_string()*/, id).unwrap()
+            let formatted_date_str = if date_str.len() == 8 && date_str.chars().nth(6) == Some('/') {
+                // If the date has a two-digit year, format it to a four-digit year
+                format!("20{}", date_str)
+            } else {
+                // If the date is already in the correct format, use it as is
+                date_str.to_string()
+            };
 
+            match Tasks::parse_date(&formatted_date_str) {
+                Ok(date) => {
+                    set_due_date(date_str.to_string(), id).unwrap();
                 },
                 Err(_) => {
                     eprintln!("Invalid date format provided.");
                 }
-            }
+            };
         }
     } 
     if let Some(sub_matches) = matches.subcommand_matches("new") {
@@ -218,15 +219,16 @@ fn check() {
 }
 
 fn main() {
+    // Create a DB instance
     let db = DB::new("tasks.db".to_string());
     let _ = check();
 }
 
 fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
     if task == Operation::Done {
-        done(task_id.try_into().unwrap())?;
+        done(task_id.try_into().unwrap())?; // Use done function
     } else if task == Operation::Remove {
-        remove(task_id.try_into().unwrap())?;
+        remove(task_id.try_into().unwrap())?; // Use remove function
     }
     Ok(())
 }

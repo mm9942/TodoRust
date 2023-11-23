@@ -319,7 +319,7 @@ impl Todo {
                     "task" => task.task = value.unwrap_or_default().to_string(),
                     "description" => task.description = value.unwrap_or_default().to_string(),
                     "due_date" => {
-                        println!("{}", value.unwrap_or_default().to_string());
+                        //println!("{}", value.unwrap_or_default().to_string());
                         if let Some(date) = value {
                             task.due_date = NaiveDate::parse_from_str(date, "%d/%m/%y")
                                 .or_else(|_| NaiveDate::parse_from_str(date, "%d/%m/%Y"))
