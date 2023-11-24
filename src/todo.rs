@@ -279,14 +279,14 @@ impl Todo {
         }
     }
     pub fn check(&self, task_id: usize) -> Result<String, TasksErr> {
-        let mut current_date = Local::now().naive_local().date();
+        let current_date = Local::now().naive_local().date();
         let task = self.tasks[task_id - 1].clone();
         let date: NaiveDate = task.get_due_date().unwrap();
-        if let equal = date == current_date {
+        if let _equal = date == current_date {
             let task_str = format!("Task: {} needs to be finished today!", task.get_id());
             return Ok(task_str);
         } else {
-            if let passed = date < current_date {
+            if let _passed = date < current_date {
                 let task_str = format!("Task: {} the date has already passed and lays in the past!", task.get_id());
                 return Ok(task_str);
             } else {

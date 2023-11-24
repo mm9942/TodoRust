@@ -1,4 +1,4 @@
-use sqlite3::{Connection, Statement, Bindable, State};
+use sqlite3::{Connection, Bindable};
 use std::result::Result;
 use std::error::Error;
 pub use chrono::{NaiveDate};
@@ -15,7 +15,7 @@ impl DB {
     }
 
     pub fn select_all(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
+        let conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
         conn.iterate("SELECT * FROM users WHERE age > 50", |pairs| {
             for &(column, value) in pairs.iter() {
                 println!("{} = {}", column, value.unwrap());
@@ -24,7 +24,7 @@ impl DB {
         }).map_err(|e| Box::new(e) as Box<dyn Error>)
     }
     pub fn insert(&mut self, task: &str, description: &str, done: bool, due_date: Option<NaiveDate>, format: &str) -> Result<(), Box<dyn Error>> {
-        let mut conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
+        let conn: Connection = sqlite3::open(&self.path).expect("Failed to open the database");
         let mut stmt = conn.prepare("INSERT INTO tasks (task, description, done, due_date, format) VALUES (?, ?, ?, ?, ?)")?;
         
         let mut due_date_str = String::new();
@@ -66,7 +66,7 @@ impl DB {
         let mut stmt = conn.prepare(&format!("UPDATE tasks SET {} = ? WHERE id = ?", column))?;
         stmt.bind(1, value)?;
         stmt.bind(2, id)?;
-        let mut cursor = stmt.cursor()
+        let _cursor = stmt.cursor()
             .next()
             .unwrap();
         conn.execute("COMMIT;")?;
@@ -95,26 +95,15 @@ pub fn remove(id: usize) -> Result<(), Box<dyn Error>> {
 
 pub fn done(id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = format!("UPDATE tasks SET Done = true WHERE id = {};", id);
-    conn.execute(
-        stmt
-    )
-    .unwrap();
-    Ok(())
-}
-
-pub fn done_new(id: usize) -> Result<(), Box<dyn Error>> {
-    let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = conn.prepare("UPDATE tasks SET Done = ? WHERE id = ?")?;
-    stmt.bind(1, "true")?;
-    stmt.bind(2, id as i64)?;
+    let mut stmt = conn.prepare("UPDATE tasks SET Done = true WHERE id = ?")?;
+    stmt.bind(1, id as i64)?;
     stmt.next().unwrap();
     conn.execute("COMMIT;")?;
     Ok(())
 }
 pub fn update(column: &str, value: &str, id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");
-    let mut stmt = format!("UPDATE tasks SET {} = '{}' where id = {};", column , value, id);
+    let stmt = format!("UPDATE tasks SET {} = '{}' where id = {};", column , value, id);
     conn.execute(
         stmt
     )

@@ -5,10 +5,10 @@ mod tasks;
 
 use crate::{
     db::{DB, set_description, set_due_date, set_format, remove, done},
-    tasks::{Tasks, parse_date},
+    tasks::{Tasks},
     todo::Todo,
 };
-use chrono::{format, NaiveDate, Local};
+use chrono::{NaiveDate};
 pub use clap::{
     self,
     Arg, 
@@ -20,14 +20,14 @@ pub use clap::{
     ArgAction
 };
 use std::{
-    io::{Write, stdout, stdin},
+    io::{Write},
     error::Error,
     fmt::{self, Display},
     result::Result,
 };
-use std::convert::From;
-use job_scheduler::{JobScheduler, Job};
-use std::time::Duration;
+
+
+
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Operation {
@@ -107,34 +107,34 @@ async fn cli() -> Command {
 }
 
 async fn check() {
-    let mut task = Tasks::new();
+    let _task = Tasks::new();
     let matches = cli().await.get_matches();
 
-    let mut todo = Todo::get_todo();
+    let todo = Todo::get_todo();
 
-    let mut title = String::new();
-    let mut description = String::new();
-    let mut date = String::new();
-    let mut format = String::new();
-    let mut done_bool = false;
-    let mut remove_bool = false;
+    let _title = String::new();
+    let _description = String::new();
+    let _date = String::new();
+    let _format = String::new();
+    let _done_bool = false;
+    let _remove_bool = false;
 
     let mut db = DB::new("tasks.db".to_string());
-    let mut task_id: i32 = 0;
+    let _task_id: i32 = 0;
 
     if let Some(sub_matches) = matches.subcommand_matches("task") {
         let id_str = sub_matches.get_one::<String>("task_id");
         let id: usize = id_str.expect("REASON").parse().unwrap();
-        let mut task_id: usize = (id - 1).try_into().unwrap();
+        let task_id: usize = (id - 1).try_into().unwrap();
         let format_str = sub_matches.get_one::<String>("format");
-        let format = if let Some(format_str) = format_str {
+        let _format = if let Some(format_str) = format_str {
             set_format(format_str, todo.tasks[task_id].get_id().try_into().unwrap())
         } else {
             Ok(())
         };
 
         let description_str = sub_matches.get_one::<String>("description");
-        let description = if let Some(description_str) = description_str {
+        let _description = if let Some(description_str) = description_str {
             set_description(description_str, todo.tasks[task_id].get_id().try_into().unwrap())
         } else {
             Ok(())
@@ -149,7 +149,7 @@ async fn check() {
             };
 
             match Tasks::parse_date(&formatted_date_str) {
-                Ok(date) => {
+                Ok(_date) => {
                     set_due_date(date_str.to_string(), todo.tasks[task_id].get_id().try_into().unwrap()).unwrap();
                 },
                 Err(_) => {
@@ -197,7 +197,7 @@ async fn check() {
         }
     }
 
-    let mut todo = Todo::get_todo();
+    let todo = Todo::get_todo();
 
     if matches.get_flag("list") {
         let list = todo.list();
@@ -233,7 +233,7 @@ async fn check() {
 
 #[tokio::main]
 async fn main() {
-    let db = DB::new("tasks.db".to_string());
+    let _db = DB::new("tasks.db".to_string());
     let _ = check().await;
 }
 

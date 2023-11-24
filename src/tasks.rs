@@ -69,7 +69,7 @@ impl Tasks {
             return Err(TasksErr::FailedToAddTask);
         }
 
-        let mut format = match format {
+        let format = match format {
             Some(format_str) => match Self::is_valid_format(format.unwrap()) {
                 true => format_str.to_string(),
                 false => "%m/%d/%Y".to_string(),
@@ -209,11 +209,4 @@ impl Display for Tasks {
             self.id, self.task, done_status, self.description, due_date_str, self.format
         )
     }
-}
-
-
-pub fn parse_date(date_str: &str) -> Result<NaiveDate, TasksErr> {
-    NaiveDate::parse_from_str(date_str, "%d/%m/%y")
-        .or_else(|_| NaiveDate::parse_from_str(date_str, "%Y-%m-%d"))
-        .map_err(|_| TasksErr::InvalidDateFormat)
 }
