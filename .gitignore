@@ -1,9 +1,9 @@
 target
 Makefile.toml
+tasks.db
+db_scripts_py
+db_scripts_py/*
 src/clap.rs
 src/notify.rs
 src/cron.rs
 src/tasks.db
-tasks.db
-db_scripts_py
-db_scripts_py/*
