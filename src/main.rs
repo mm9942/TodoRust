@@ -24,7 +24,7 @@ use std::{
     fmt::{self, Display},
     result::Result,
 };
-
+use dirs;
 
 
 
@@ -232,7 +232,11 @@ async fn check() {
 
 #[tokio::main]
 async fn main() {
-    let _db = DB::new("tasks.db".to_string());
+    let home_dir = dirs::home_dir().expect("Could not find home directory");
+    let db_path = home_dir.join(".db").join("tasks.db");
+    let db_path_str = db_path.to_str().expect("Failed to convert path to string");
+
+    let _db = DB::new(db_path_str.to_string());
     let _ = check().await;
 }
 
