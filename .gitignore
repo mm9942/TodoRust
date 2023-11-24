@@ -5,4 +5,5 @@ src/notify.rs
 src/cron.rs
 src/tasks.db
 tasks.db
-db_scripts (python)
+db_scripts_py
+db_scripts_py/*
