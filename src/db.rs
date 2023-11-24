@@ -72,17 +72,6 @@ impl DB {
         conn.execute("COMMIT;")?;
         Ok(())
     }
-    
-    
-    /*pub fn select_all(&mut self) -> Result<Vec<State::Row>> {
-        let mut stmt = self.conn.prepare("SELECT * FROM tasks")?;
-        let mut rows = Vec::new();
-        while let State::Row = stmt.step()? {
-            let row = stmt.get_row(0)?;
-            rows.push(row);
-        }
-        Ok(rows)
-    }*/
 }
 pub fn remove(id: usize) -> Result<(), Box<dyn Error>> {
     let conn: Connection = sqlite3::open("tasks.db").expect("Failed to open the database");

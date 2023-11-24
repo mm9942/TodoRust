@@ -1,6 +1,5 @@
 mod todo;
 mod db;
-mod command;
 mod tasks;
 
 use crate::{

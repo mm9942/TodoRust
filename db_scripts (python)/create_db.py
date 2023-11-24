@@ -15,26 +15,6 @@ c.execute('''
           format TEXT)
           ''')
 
-# Insert record
-c.execute('''
-          INSERT INTO tasks
-          (task, done, description, format)
-          VALUES ('Projekt Tasks Beenden', 0, 'Dont Forget: Github Commit', '%d.%m.%Y')
-          ''')
-
-# Insert record
-c.execute('''
-          INSERT INTO tasks
-          (task, done, description, format)
-          VALUES ('Check my mails', 0, 'Relogin into Outlook with personal domain''s mail', '%d.%m.%Y')
-          ''')
-format 3 %d.%m.%Y
-# Insert record
-c.execute('''
-          INSERT INTO tasks
-          (task, done, description, format)
-          VALUES ('Buy a new CPU', 0, 'At market X are currently good discounts', '%d.%m.%Y')
-          ''')
 
 # Commit changes and close connection
 conn.commit()
