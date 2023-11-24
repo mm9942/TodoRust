@@ -1,9 +1,20 @@
-target
+# Ignore the 'target' directory
+target/
+
+# Ignore the 'Makefile.toml' file
 Makefile.toml
+
+# Ignore the 'tasks.db' file
 tasks.db
-db_scripts_py
+
+# Ignore the 'db_scripts_py' directory and everything inside it
+db_scripts_py/
 db_scripts_py/*
+
+# Ignore specific files in the 'src' directory
 src/clap.rs
 src/notify.rs
 src/cron.rs
+
+# This entry might be redundant if 'tasks.db' is meant to be ignored globally
 src/tasks.db
