@@ -26,6 +26,8 @@ use std::{
     result::Result,
 };
 use std::convert::From;
+use job_scheduler::{JobScheduler, Job};
+use std::time::Duration;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Operation {
@@ -73,7 +75,7 @@ impl Display for ArgErr {
 }
 impl std::error::Error for ArgErr {}
 
-fn cli() -> Command {
+async fn cli() -> Command {
     Command::new("todo_rust")
         .about("Todo Manager in Rust")
         .long_about(
@@ -104,9 +106,9 @@ fn cli() -> Command {
         )
 }
 
-fn check() {
+async fn check() {
     let mut task = Tasks::new();
-    let matches = cli().get_matches();
+    let matches = cli().await.get_matches();
 
     let mut todo = Todo::get_todo();
 
@@ -229,12 +231,13 @@ fn check() {
     
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let db = DB::new("tasks.db".to_string());
-    let _ = check();
+    let _ = check().await;
 }
 
-fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
+async fn change_done_or_delete(task: Operation, task_id: usize) -> Result<(), Box<dyn Error>> {
     if task == Operation::Done {
         done(task_id.try_into().unwrap())?;
     } else if task == Operation::Remove {
