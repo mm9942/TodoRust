@@ -3,6 +3,7 @@ pub use std::io::{stdin, stdout, Write};
 pub use std::result::Result;
 use crate::db::{remove, done, update, set_format, DB, set_due_date};
 
+use dirs;
 use chrono::{NaiveDate, Local};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Todo {
@@ -14,7 +15,10 @@ impl Todo {
         Todo { tasks }
     }
     pub fn interactive_mode(mut self) -> Result<(), TasksErr> {
-        let mut db = DB::new("tasks.db".to_string());
+        let home_dir = dirs::home_dir().expect("Could not find home directory");
+        let db_path = home_dir.join(".db").join("tasks.db");
+        let db_path_str = db_path.to_str().expect("Failed to convert path to string");
+        let mut db = DB::new(db_path_str.to_string());
         self.clear();
         self.help();
         loop {
@@ -335,7 +339,11 @@ impl Todo {
         print!("{}[2J", 27 as char);
     }
     pub fn get_todo() -> Todo {
-        let connection = sqlite3::open("tasks.db").unwrap();
+        let home_dir = dirs::home_dir().expect("Could not find home directory");
+        let db_path = home_dir.join(".db").join("tasks.db");
+        let db_path_str = db_path.to_str().expect("Failed to convert path to string");
+
+        let connection = sqlite3::open(db_path_str.to_string()).unwrap();
         let mut tasks = Vec::new();
 
         connection.iterate("SELECT * FROM tasks", |pairs| {

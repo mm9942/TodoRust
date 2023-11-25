@@ -1,7 +1,7 @@
 use std::process::Command;
 
 fn main() {
-    let cli_command = "echo 'Hello World!'";
+    let cli_command = "todo --check";
 
     #[cfg(target_os = "windows")]
     create_windows_task(cli_command);

@@ -10,10 +10,10 @@ use crate::{
 use chrono::{NaiveDate};
 pub use clap::{
     self,
-    Arg, 
+    Arg,
     Command,
-    arg, 
-    Parser, 
+    arg,
+    Parser,
     command,
     builder::OsStr,
     ArgAction
@@ -24,7 +24,7 @@ use std::{
     fmt::{self, Display},
     result::Result,
 };
-
+use dirs;
 
 
 
@@ -117,8 +117,12 @@ async fn check() {
     let _format = String::new();
     let _done_bool = false;
     let _remove_bool = false;
+    let home_dir = dirs::home_dir().expect("Could not find home directory");
+    let db_path = home_dir.join(".db").join("tasks.db");
+    let db_path_str = db_path.to_str().expect("Failed to convert path to string");
+    println!("{}", db_path_str);
+    let mut db = DB::new(db_path_str.to_string());
 
-    let mut db = DB::new("tasks.db".to_string());
     let _task_id: i32 = 0;
 
     if let Some(sub_matches) = matches.subcommand_matches("task") {
@@ -156,7 +160,7 @@ async fn check() {
                 }
             };
         }
-    } 
+    }
     if let Some(sub_matches) = matches.subcommand_matches("new") {
         let format_str = sub_matches.get_one::<String>("format").expect("Not a string").as_str();
         let format = format_str;
@@ -227,12 +231,16 @@ async fn check() {
         }
     }
 
-    
+
 }
 
 #[tokio::main]
 async fn main() {
-    let _db = DB::new("tasks.db".to_string());
+    let home_dir = dirs::home_dir().expect("Could not find home directory");
+    let db_path = home_dir.join(".db").join("tasks.db");
+    let db_path_str = db_path.to_str().expect("Failed to convert path to string");
+    println!("{}", db_path_str);
+    let _db = DB::new(db_path_str.to_string());
     let _ = check().await;
 }
 

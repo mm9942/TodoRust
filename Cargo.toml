@@ -10,6 +10,7 @@ build = "build.rs"
 cargo-make = "0.37.4"
 chrono = "0.4.31"
 clap = { version = "4.4.7", features = ["env", "derive", "unicode", "string", "deprecated", "wrap_help"] }
+dirs = "5.0.1"
 job_scheduler = "1.2.1"
 notify-rust = "4.9.0"
 #rusqlite = "0.29.0"
