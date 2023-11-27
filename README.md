@@ -26,10 +26,17 @@ git clone https://github.com/mm9942/TodoRust.git
 cd TodoRust
 ```
 
-3. Build the project:
+3.1. Direct installation through setup.py:
+```bash
+python3 setup.py
+```
+
+3.2. Alternativly build and install the project manually:
 ```bash
 cargo build --release
+cargo install --path .
 ```
+#### when installing manually you also need to build the Sqlite3 database manually, use the code in the setup.py to see how to design the database table and the names
 
 ### Usage
 
@@ -37,31 +44,24 @@ The primary objects are `Tasks` and `TasksErr` enum which encapsulates task deta
 
 Here's how you can create a new task:
 
-```rust
-let task_result = Tasks::add("New Task", "This is a new task", None);
+```bash
+todo new -t "new title" -d "new description" --date 22/12/24
 ```
 
-Set a due date for a task:
+Set or change a date for a task:
 
-```rust
-let _ = task.set_due_date("31.12.2023").unwrap();
+```bash
+todo task -t --date 22/12/24 -i 2
 ```
 
 Mark a task as done:
 
-```rust
-let _ = task.done();
+```bash
+todo --done 2
 ```
 
 For more examples and usage, please refer to the `main.rs` file.
 
-### Testing
-
-Run the tests using the following command:
-
-```bash
-cargo test
-```
 
 ## Contributing
 
