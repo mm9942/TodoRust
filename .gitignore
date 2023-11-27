@@ -9,12 +9,11 @@ tasks.db
 
 # Ignore the 'db_scripts_py' directory and everything inside it
 db_scripts_py/
-db_scripts_py/*
 
 # Ignore specific files in the 'src' directory
-src/clap.rs
-src/notify.rs
-src/cron.rs
+clap.rs
+notify.rs
+cron.rs
 
 # This entry might be redundant if 'tasks.db' is meant to be ignored globally
-src/tasks.db
+tasks.db
