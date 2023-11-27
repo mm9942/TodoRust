@@ -12,7 +12,8 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Dependencies
 
-- `chrono`: A date and time library for Rust, to handle date parsing and formatting.
+- `chrono`: This is a comprehensive date and time library utilized in Rust programming. Its primary function is to facilitate the parsing and formatting of dates and times.
+- `clap`: This serves as a Command Line Argument wrapper for Rust. It simplifies the process of managing and interpreting command line arguments within Rust applications.
 
 ### Installation
 
