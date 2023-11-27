@@ -36,7 +36,7 @@ python3 setup.py
 cargo build --release
 cargo install --path .
 ```
-#### when installing manually you also need to build the Sqlite3 database manually, use the code in the setup.py to see how to design the database table and the names
+##### when installing manually you also need to build the Sqlite3 database manually, use the code in the setup.py to see how to design the database table and the names
 
 ### Usage
 
